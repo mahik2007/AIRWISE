@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, MapPin, Loader2, Navigation } from 'lucide-react';
+import { Search, MapPin, Loader2, Navigation, AlertCircle } from 'lucide-react';
 import { searchLocations } from '../../services/api';
 import { GeocodingResult } from '../../types';
 
@@ -17,6 +17,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [geoLocating, setGeoLocating] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -32,17 +33,20 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
   useEffect(() => {
     if (query.trim().length < 2) {
       setResults([]);
+      setErrorMessage(null);
       return;
     }
 
     const timer = setTimeout(async () => {
       try {
         setLoading(true);
+        setErrorMessage(null);
         const res = await searchLocations(query.trim());
         setResults(res);
         setIsOpen(true);
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
+        setErrorMessage('Unable to reach location service. Please verify network.');
       } finally {
         setLoading(false);
       }
@@ -53,17 +57,18 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
 
   const handleUseBrowserLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      setErrorMessage('Geolocation is not supported by your browser.');
       return;
     }
 
     setGeoLocating(true);
+    setErrorMessage(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setGeoLocating(false);
         onSelectLocation({
           id: 0,
-          name: 'My Current Location',
+          name: 'My GPS Location',
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
           country: 'Local',
@@ -73,9 +78,9 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
       (err) => {
         setGeoLocating(false);
         console.warn('Geolocation denied or failed:', err);
-        alert('Could not retrieve browser geolocation. Please search manually.');
+        setErrorMessage('Location permission denied or unavailable. Please search by city name.');
       },
-      { timeout: 10000 }
+      { timeout: 8000 }
     );
   };
 
@@ -88,7 +93,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.trim().length >= 2 && setIsOpen(true)}
-          placeholder={currentLocationName ? `Current: ${currentLocationName}` : 'Search city (e.g. Delhi, Mumbai, Lahore)...'}
+          placeholder={currentLocationName ? `Active: ${currentLocationName}` : 'Search city (e.g. Delhi, Mumbai, London)...'}
           className="w-full pl-10 pr-24 py-2.5 rounded-xl bg-[#111e17] border border-[#233a2c] text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition-all shadow-inner"
         />
         <div className="absolute right-2 flex items-center space-x-1">
@@ -107,6 +112,14 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Inline Geolocation or Search Error Banner */}
+      {errorMessage && (
+        <div className="mt-2 p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-[11px] text-amber-300 flex items-center space-x-1.5">
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       {/* Dropdown Results */}
       {isOpen && results.length > 0 && (
@@ -146,4 +159,3 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
     </div>
   );
 };
-

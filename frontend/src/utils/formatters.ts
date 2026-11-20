@@ -56,9 +56,29 @@ export function getAqiColor(aqi: number): {
   }
 }
 
+export function getEuropeanAqiBadge(aqi: number): {
+  category: string;
+  badge: string;
+} {
+  if (aqi <= 20) {
+    return { category: 'Good', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/40' };
+  } else if (aqi <= 40) {
+    return { category: 'Fair', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
+  } else if (aqi <= 60) {
+    return { category: 'Moderate', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
+  } else if (aqi <= 80) {
+    return { category: 'Poor', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/40' };
+  } else if (aqi <= 100) {
+    return { category: 'Very Poor', badge: 'bg-red-500/20 text-red-300 border-red-500/40' };
+  } else {
+    return { category: 'Extremely Poor', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/40' };
+  }
+}
+
 export function formatTime(isoString: string): string {
   try {
     const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   } catch {
     return isoString;
@@ -68,9 +88,9 @@ export function formatTime(isoString: string): string {
 export function formatDate(isoString: string): string {
   try {
     const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
     return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
   } catch {
     return isoString;
   }
 }
-

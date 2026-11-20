@@ -1,13 +1,13 @@
 import React from 'react';
 import { 
-  Wind, Clock, Database, AlertTriangle, ShieldCheck, 
-  TrendingUp, Calendar, ChevronRight, Info, CheckCircle
+  Wind, Clock, ShieldCheck, 
+  TrendingUp, Calendar, ChevronRight, Info, AlertTriangle
 } from 'lucide-react';
 import { 
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid 
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid 
 } from 'recharts';
 import { AirQualityPayload } from '../../types';
-import { getAqiColor, formatTime, formatDate } from '../../utils/formatters';
+import { getAqiColor, getEuropeanAqiBadge, formatTime, formatDate } from '../../utils/formatters';
 
 interface AirDashboardProps {
   data: AirQualityPayload;
@@ -18,6 +18,7 @@ interface AirDashboardProps {
 export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onAskAI }) => {
   const current = data.current;
   const aqiStyle = getAqiColor(current.usAqi);
+  const eurAqiBadge = current.europeanAqi !== undefined ? getEuropeanAqiBadge(current.europeanAqi) : null;
 
   const pollutants = [
     { name: 'PM2.5', label: 'Fine Inhalable Particles', val: current.pm2_5.value, unit: current.pm2_5.unit, limit: 15, desc: 'Penetrates deep into lung alveoli and bloodstream.' },
@@ -28,7 +29,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
     { name: 'CO', label: 'Carbon Monoxide', val: current.carbonMonoxide.value, unit: current.carbonMonoxide.unit, limit: 4000, desc: 'Incomplete combustion in traffic.' },
   ];
 
-  // Chart data formatting
+  // Chart data formatting with sanitized numbers
   const chartData = data.hourly.map((pt) => ({
     time: formatTime(pt.time),
     aqi: pt.usAqi,
@@ -39,41 +40,46 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Top Banner: Location & Data Provenance */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-[#0f1d16] border border-[#1d3527]">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-            <Wind className="w-5 h-5" />
+      {/* Top Banner: Location, Exact Coordinates & Telemetry Provenance */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-[#0f1d16] border border-[#1d3527]">
+        <div className="flex items-center space-x-3.5">
+          <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
+            <Wind className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-xl font-bold text-slate-100">{data.location.name}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-100">{data.location.name}</h1>
               {data.location.country && (
-                <span className="text-xs px-2 py-0.5 rounded bg-[#172b20] text-slate-300 border border-[#234231]">
+                <span className="text-xs px-2.5 py-0.5 rounded-md bg-[#172b20] text-slate-300 border border-[#234231]">
                   {[data.location.admin1, data.location.country].filter(Boolean).join(', ')}
                 </span>
               )}
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#122319] text-emerald-400/90 border border-emerald-500/20">
+                {data.location.latitude.toFixed(4)}°N, {data.location.longitude.toFixed(4)}°E
+              </span>
             </div>
-            <p className="text-xs text-slate-400 flex items-center space-x-1.5 mt-0.5">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
-              <span>Timestamp: {formatDate(current.timestamp)} {formatTime(current.timestamp)}</span>
+            <p className="text-xs text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+              <span className="flex items-center space-x-1">
+                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <span>Last Updated: {formatDate(current.timestamp)} at {formatTime(current.timestamp)}</span>
+              </span>
               <span>•</span>
               <span className="text-emerald-400/90 font-medium">
-                {current.isObservedStation ? 'Official Observed Station' : 'Atmospheric Modelled Forecast'}
+                {current.isObservedStation ? `Observed Station: ${current.stationName}` : 'Atmospheric Dispersion Model (CAMS)'}
               </span>
             </p>
           </div>
         </div>
 
-        {/* CPCB vs Model Tag */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Data Provenance & Refresh */}
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="px-3 py-1.5 rounded-xl bg-[#14261c] border border-[#213e2d] text-xs">
-            <span className="text-slate-400 mr-1.5">Data Engine:</span>
+            <span className="text-slate-400 mr-1.5">Telemetry Provider:</span>
             <span className="text-emerald-300 font-semibold">{current.dataSource}</span>
           </div>
           <button
             onClick={onRefresh}
-            className="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-medium transition-all"
+            className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all hover:scale-[1.02]"
           >
             Refresh Readings
           </button>
@@ -82,11 +88,11 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
 
       {/* Main AQI Indicator Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Core AQI Gauge Card */}
+        {/* Core AQI Gauge Card: US AQI Scale Clearly Identified */}
         <div className={`p-6 rounded-3xl border ${aqiStyle.border} ${aqiStyle.bg} flex flex-col justify-between relative overflow-hidden backdrop-blur-md`}>
           <div>
             <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-mono font-bold tracking-widest text-slate-300 uppercase">
+              <span className="text-xs font-mono font-bold tracking-widest text-emerald-300 uppercase bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
                 US AQI Scale (EPA Standard)
               </span>
               <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${aqiStyle.badge}`}>
@@ -98,26 +104,32 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
               <span className={`text-6xl sm:text-7xl font-extrabold tracking-tight ${aqiStyle.text}`}>
                 {current.usAqi}
               </span>
-              <span className="text-xs text-slate-400">Index points (0–500)</span>
+              <span className="text-xs text-slate-400">US EPA Index points (0–500)</span>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Calculated using the US EPA standard equation from continuous PM2.5, PM10, NO₂, and O₃ concentrations.
+              Calculated using the US EPA standard equation from continuous surface concentrations of PM2.5, PM10, NO₂, and O₃.
             </p>
           </div>
 
+          {/* Secondary Scale: European AQI clearly identified */}
           <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
-            {current.europeanAqi !== undefined && (
+            {current.europeanAqi !== undefined && eurAqiBadge && (
               <div className="text-xs">
-                <span className="text-slate-400 block text-[10px]">European AQI:</span>
-                <span className="font-semibold text-slate-200">
-                  {current.europeanAqi} ({current.europeanAqiCategory})
+                <span className="text-slate-400 block text-[10px] uppercase font-mono tracking-wider">
+                  European AQI (EAQI Scale 0–100+):
                 </span>
+                <div className="flex items-center space-x-1.5 mt-0.5">
+                  <span className="font-bold text-slate-200 text-sm">{current.europeanAqi}</span>
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${eurAqiBadge.badge}`}>
+                    {eurAqiBadge.category}
+                  </span>
+                </div>
               </div>
             )}
             <button
               onClick={() => onAskAI(`What precautions should I take in ${data.location.name} with US AQI at ${current.usAqi}?`)}
-              className="text-xs font-medium text-emerald-300 hover:text-emerald-200 flex items-center"
+              className="text-xs font-medium text-emerald-300 hover:text-emerald-200 flex items-center ml-auto"
             >
               <span>Ask AI what to do</span>
               <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
@@ -166,17 +178,17 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
           </div>
         </div>
 
-        {/* Scale Clarification & Attribution Card */}
-        <div className="p-6 rounded-3xl bg-[#101e16] border border-[#1e3828] flex flex-col justify-between">
+        {/* Scientific Scale Transparency & Indian CPCB Integrity Card */}
+        <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828] flex flex-col justify-between">
           <div>
             <div className="flex items-center space-x-2 text-xs font-semibold text-slate-300 mb-3">
               <Info className="w-4 h-4 text-emerald-400" />
-              <span>Scientific Scale Labelling</span>
+              <span>Scale Distinction & Indian CPCB Integrity</span>
             </div>
             <div className="space-y-2.5 text-xs text-slate-400 leading-relaxed">
-              <div className="p-2.5 rounded-xl bg-[#14241b] border border-[#203728]">
-                <strong className="text-slate-200 block mb-0.5">Scale Distinction Notice:</strong>
-                This dashboard displays <span className="text-emerald-300 font-semibold">Open-Meteo US AQI (0–500)</span> and European AQI. Indian CPCB AQI uses distinct national sub-index breakpoints.
+              <div className="p-3 rounded-xl bg-[#14241b] border border-[#203728]">
+                <strong className="text-slate-200 block mb-1">Scale Transparency Policy:</strong>
+                This dashboard displays <span className="text-emerald-300 font-semibold">US EPA AQI</span> and <span className="text-teal-300 font-semibold">European EAQI</span>. Indian Central Pollution Control Board (CPCB) NAQI uses distinct national 24-hour sub-index breakpoints and is never substituted or conflated with modelled EPA indices.
               </div>
               <p className="text-[11px] text-slate-400">
                 {data.attribution.cpcbStatus}
@@ -184,7 +196,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             </div>
           </div>
 
-          <div className="pt-4 border-t border-[#1a3123] text-[10px] text-slate-400">
+          <div className="pt-4 border-t border-[#1a3123] text-[10px] text-slate-500">
             Source: {data.attribution.dataProvider}
           </div>
         </div>
@@ -197,6 +209,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             <span>Critical Pollutant Concentrations</span>
             <span className="text-xs text-slate-400 font-normal">({current.pm2_5.unit})</span>
           </h2>
+          <span className="text-[11px] text-slate-500 hidden sm:inline">WHO 24-hour guidance limits indicated</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
@@ -268,7 +281,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#1b3325" vertical={false} />
-              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} />
+              <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} interval={3} />
               <YAxis stroke="#64748b" tick={{ fontSize: 11 }} />
               <Tooltip
                 contentStyle={{
@@ -305,7 +318,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
                   <div className="text-xs font-semibold text-slate-300">{formatDate(day.date)}</div>
                   <div className="text-2xl font-bold text-slate-100 mt-2">
                     {day.maxUsAqi}{' '}
-                    <span className="text-xs font-normal text-slate-400">Peak AQI</span>
+                    <span className="text-xs font-normal text-slate-400">Peak US AQI</span>
                   </div>
                   <div className={`inline-block mt-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${dayAqiStyle.badge}`}>
                     {day.conditionSummary}
@@ -322,4 +335,3 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
     </div>
   );
 };
-

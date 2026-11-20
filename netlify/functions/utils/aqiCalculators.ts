@@ -1,3 +1,4 @@
+// US AQI Category determination based on EPA Standard Breakpoints
 export function getUsAqiCategory(aqi: number): {
   category: 'Good' | 'Moderate' | 'Unhealthy for Sensitive Groups' | 'Unhealthy' | 'Very Unhealthy' | 'Hazardous';
   color: string;
@@ -42,6 +43,7 @@ export function getUsAqiCategory(aqi: number): {
   }
 }
 
+// European Air Quality Index (EAQI) standard scale (0-20 Good, 20-40 Fair, 40-60 Moderate, 60-80 Poor, 80-100 Very Poor, >100 Extremely Poor)
 export function getEuropeanAqiCategory(aqi: number): string {
   if (aqi <= 20) return 'Good';
   if (aqi <= 40) return 'Fair';
@@ -49,4 +51,23 @@ export function getEuropeanAqiCategory(aqi: number): string {
   if (aqi <= 80) return 'Poor';
   if (aqi <= 100) return 'Very Poor';
   return 'Extremely Poor';
+}
+
+export function getEuropeanAqiBadge(aqi: number): {
+  category: string;
+  badge: string;
+} {
+  if (aqi <= 20) {
+    return { category: 'Good', badge: 'bg-teal-500/20 text-teal-300 border-teal-500/40' };
+  } else if (aqi <= 40) {
+    return { category: 'Fair', badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
+  } else if (aqi <= 60) {
+    return { category: 'Moderate', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
+  } else if (aqi <= 80) {
+    return { category: 'Poor', badge: 'bg-orange-500/20 text-orange-300 border-orange-500/40' };
+  } else if (aqi <= 100) {
+    return { category: 'Very Poor', badge: 'bg-red-500/20 text-red-300 border-red-500/40' };
+  } else {
+    return { category: 'Extremely Poor', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/40' };
+  }
 }

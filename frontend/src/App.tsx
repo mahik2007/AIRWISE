@@ -64,7 +64,7 @@ export const App: React.FC = () => {
       setAirQualityData(data);
     } catch (err: any) {
       console.error(err);
-      setError('Unable to fetch live air quality data. Please check your internet or retry.');
+      setError(`Unable to retrieve real-time air quality data for ${loc.name}. Please check your connection or retry.`);
     } finally {
       setLoading(false);
     }
@@ -118,18 +118,19 @@ export const App: React.FC = () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           selectedCity={currentCity.name}
+          onSelectCity={handleSelectCity}
         />
 
         {error && (
           <div className="max-w-7xl mx-auto px-4 mt-4">
-            <div className="p-3.5 rounded-2xl bg-red-950/40 border border-red-500/30 text-xs text-red-300 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+            <div className="p-4 rounded-2xl bg-red-950/40 border border-red-500/30 text-xs text-red-300 flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
               <button
                 onClick={() => loadAirData(currentCity)}
-                className="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-200 text-[11px] font-semibold"
+                className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-200 text-xs font-semibold transition-colors"
               >
                 Retry
               </button>
@@ -150,7 +151,10 @@ export const App: React.FC = () => {
             loading && !airQualityData ? (
               <div className="py-24 flex flex-col items-center justify-center space-y-3">
                 <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-                <p className="text-xs text-slate-400">Loading atmospheric sensors for {currentCity.name}...</p>
+                <p className="text-xs text-slate-400 font-medium">
+                  Connecting to atmospheric sensors for <span className="text-emerald-300">{currentCity.name}</span>...
+                </p>
+                <p className="text-[11px] text-slate-500">Querying Open-Meteo & Copernicus CAMS models</p>
               </div>
             ) : airQualityData ? (
               <AirDashboard

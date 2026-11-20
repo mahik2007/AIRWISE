@@ -77,3 +77,4 @@ describe('Netlify Functions Verification', () => {
     expect(body.pm25SavedGrams).toBeGreaterThan(0);
   });
 });
+

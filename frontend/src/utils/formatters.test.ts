@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getAqiColor, formatTime, formatDate } from './formatters';
+import { getAqiColor, getEuropeanAqiBadge, formatTime, formatDate } from './formatters';
 
 describe('Frontend Formatters & Color Mappings', () => {
   it('correctly returns styling metadata for Good AQI', () => {
@@ -20,12 +20,22 @@ describe('Frontend Formatters & Color Mappings', () => {
     expect(res.text).toContain('rose');
   });
 
+  it('correctly maps European AQI badges across all scale tiers', () => {
+    expect(getEuropeanAqiBadge(15).category).toBe('Good');
+    expect(getEuropeanAqiBadge(55).category).toBe('Moderate');
+    expect(getEuropeanAqiBadge(112).category).toBe('Extremely Poor');
+  });
+
   it('formats dates and times gracefully', () => {
-    const iso = '2026-11-18T08:30:00Z';
+    const iso = '2026-11-20T08:30:00Z';
     const timeStr = formatTime(iso);
     const dateStr = formatDate(iso);
     expect(typeof timeStr).toBe('string');
     expect(typeof dateStr).toBe('string');
   });
-});
 
+  it('safely handles non-ISO or malformed time values', () => {
+    expect(formatTime('invalid-time')).toBe('invalid-time');
+    expect(formatDate('invalid-date')).toBe('invalid-date');
+  });
+});

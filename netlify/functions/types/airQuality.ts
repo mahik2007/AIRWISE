@@ -75,3 +75,4 @@ export interface ChatRecommendationResponse {
   expectedBenefit: string;
   relevantLimitations: string;
 }
+

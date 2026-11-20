@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { getUsAqiCategory, getEuropeanAqiCategory } from './aqiCalculators.js';
+import { getUsAqiCategory, getEuropeanAqiCategory, getEuropeanAqiBadge } from './aqiCalculators.js';
 import { calculateTripSavings } from './emissionModels.js';
 
-describe('AQI Category Calculators', () => {
+describe('AQI Category Calculators & Scale Verification', () => {
   it('correctly categorizes Good US AQI', () => {
     const res = getUsAqiCategory(35);
     expect(res.category).toBe('Good');
@@ -25,10 +25,21 @@ describe('AQI Category Calculators', () => {
     expect(res.color).toBe('#7F1D1D');
   });
 
-  it('evaluates European AQI boundaries', () => {
+  it('evaluates European AQI boundaries and badges accurately', () => {
     expect(getEuropeanAqiCategory(15)).toBe('Good');
+    expect(getEuropeanAqiCategory(35)).toBe('Fair');
     expect(getEuropeanAqiCategory(50)).toBe('Moderate');
+    expect(getEuropeanAqiCategory(75)).toBe('Poor');
     expect(getEuropeanAqiCategory(95)).toBe('Very Poor');
+    expect(getEuropeanAqiCategory(115)).toBe('Extremely Poor');
+
+    const badgeGood = getEuropeanAqiBadge(15);
+    expect(badgeGood.category).toBe('Good');
+    expect(badgeGood.badge).toContain('teal');
+
+    const badgeExtreme = getEuropeanAqiBadge(120);
+    expect(badgeExtreme.category).toBe('Extremely Poor');
+    expect(badgeExtreme.badge).toContain('purple');
   });
 });
 
