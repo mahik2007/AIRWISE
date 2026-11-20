@@ -1,0 +1,22 @@
+{
+  "name": "airwise",
+  "version": "1.0.0",
+  "description": "AIRWISE — Your City. Your Air. Your Everyday Guide.",
+  "type": "module",
+  "scripts": {
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build": "npm run build:frontend",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npx vitest run",
+    "test": "npm run test:backend && npm run test:frontend"
+  },
+  "dependencies": {
+    "@google/genai": "^3.4.0",
+    "axios": "^1.7.9",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "typescript": "^5.7.3"
+  }
+}

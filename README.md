@@ -3,13 +3,13 @@
 # 🍃 AIRWISE
 ### *YOUR CITY. YOUR AIR. YOUR EVERYDAY GUIDE.*
 
+[![Netlify Deploy](https://img.shields.io/badge/Deploy-Netlify%20Serverless-00C7B7?style=for-the-badge&logo=netlify)](https://www.netlify.com)
 [![PromptWars](https://img.shields.io/badge/PromptWars%20Virtual-Challenge%206%3A%20Urban%20Air%20Quality-10B981?style=for-the-badge&logo=target)](https://hack2skill.com)
 [![Google Gemini](https://img.shields.io/badge/Google%20GenAI-Gemini%202.5%20Flash-4285F4?style=for-the-badge&logo=google)](https://ai.google.dev)
 [![React](https://img.shields.io/badge/React%2019-Vite%20%7C%20TypeScript-61DAFB?style=for-the-badge&logo=react)](https://react.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v4%20Forest%20Theme-06B6D4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com)
-[![Node.js](https://img.shields.io/badge/Node.js%20v24-Express%20REST%20API-339933?style=for-the-badge&logo=nodedotjs)](https://nodejs.org)
 
-**An intelligent full-stack environmental assistant helping communities navigate winter smog with grounded AI, tailored routines, and sustainable lifestyle choices.**
+**An intelligent full-stack environmental assistant helping communities navigate winter smog with grounded AI, tailored routines, and sustainable lifestyle choices — deployed as a modern Serverless application on Netlify.**
 
 </div>
 
@@ -29,7 +29,7 @@
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ Netlify Serverless Architecture
 
 ```mermaid
 flowchart LR
@@ -43,26 +43,118 @@ flowchart LR
         LOG["🏆 My Impact Log"]
     end
 
-    subgraph Backend["⚙️ Server (Express + TypeScript)"]
-        API["REST Router (/api)"]
-        GEO["Geocoding Service"]
-        AQ["Air Quality Aggregator"]
-        MODEL["ARAI Emission Models"]
-        GEMINI["Gemini 2.5 Flash Engine"]
-        FALLBACK["Deterministic Fallback"]
+    subgraph Netlify["⚡ Netlify Edge & Serverless Functions"]
+        STATIC["SPA Client (publish: frontend/dist)"]
+        F_CHAT["POST /.netlify/functions/chat"]
+        F_AQ["GET /.netlify/functions/air-quality"]
+        F_GEO["GET /.netlify/functions/geocode"]
+        F_CALC["POST /.netlify/functions/calculator-transport"]
+        REDIRECTS["netlify.toml Rewrites (/api/*)"]
     end
 
-    subgraph DataSources["☁️ Telemetry & Cloud Services"]
+    subgraph External["☁️ Telemetry & Cloud APIs"]
         OM["Open-Meteo & CAMS"]
         CPCB["data.gov.in / CPCB"]
-        AI["Google Gemini API"]
+        AI["Google Gemini 2.5 API"]
     end
 
-    Client -->|JSON / REST| Backend
-    GEO --> OM
-    AQ --> OM & CPCB
-    GEMINI --> AI
-    GEMINI -.->|Quota Offline| FALLBACK
+    Client -->|/api/*| REDIRECTS
+    REDIRECTS --> F_CHAT & F_AQ & F_GEO & F_CALC
+    F_GEO --> OM
+    F_AQ --> OM & CPCB
+    F_CHAT -->|process.env.GEMINI_API_KEY| AI
+```
+
+---
+
+## 🌐 Netlify Function Endpoints
+
+All endpoints are mapped transparently from `/api/*` to Netlify Serverless Functions via `netlify.toml`:
+
+| Route | Function Path | Method | Description |
+| :--- | :--- | :---: | :--- |
+| `/api/chat` | `netlify/functions/chat.ts` | `POST` | Grounded Gemini 2.5 Flash co-pilot advice & fallback |
+| `/api/air-quality` | `netlify/functions/air-quality.ts` | `GET` | Live multi-pollutant readings, hourly curves & 5-day forecast |
+| `/api/geocode` | `netlify/functions/geocode.ts` | `GET` | Fuzzy city coordinate search & admin region matching |
+| `/api/calculator/transport` | `netlify/functions/calculator-transport.ts` | `POST` | ARAI/DEFRA tailpipe emissions comparator |
+
+---
+
+## 🚀 Netlify Deployment Guide
+
+### Option 1: One-Click Git Deployment (Recommended)
+1. Push your repository to GitHub: `https://github.com/mahik2007/AIRWISE`
+2. Log into [Netlify](https://app.netlify.com/) and click **"Add new site"** $\to$ **"Import an existing project"**.
+3. Select your **GitHub** provider and pick the **AIRWISE** repository.
+4. Netlify will automatically detect configuration from `netlify.toml`:
+   - **Base directory:** *(leave blank / root)*
+   - **Build command:** `npm run build`
+   - **Publish directory:** `frontend/dist`
+   - **Functions directory:** `netlify/functions`
+5. Go to **Site configuration** $\to$ **Environment variables** $\to$ **Add a variable**:
+   - `GEMINI_API_KEY`: *Your Google Gemini API Key*
+   - *(Optional)* `DATA_GOV_IN_API_KEY`: *Official CPCB API Key*
+6. Click **Deploy Site**. Your application and serverless functions will be live instantly!
+
+### Option 2: Netlify CLI
+```bash
+# 1. Install Netlify CLI globally
+npm install -g netlify-cli
+
+# 2. Login to your Netlify account
+netlify login
+
+# 3. Link project and deploy
+netlify init
+netlify deploy --prod
+```
+
+---
+
+## 🔐 Environment Variables & Security
+
+AIRWISE enforces strict enterprise security boundaries:
+- **Serverless Isolation:** All Gemini API queries run server-side inside `netlify/functions/chat.ts`.
+- **Zero Frontend Leakage:** Never prefix AI keys with `VITE_`. Frontend bundles contain zero secrets.
+- **Git Protection:** `.env`, `.env.local`, and `.netlify/` are strictly excluded in `.gitignore`.
+
+```env
+# Set in Netlify Dashboard (Site configuration > Environment variables)
+GEMINI_API_KEY=AIzaSy...your_gemini_api_key_here
+# Optional: data.gov.in API key for official CPCB stations
+DATA_GOV_IN_API_KEY=
+```
+
+---
+
+## 💻 Local Development with Netlify Functions
+
+You can test both the React frontend and Netlify serverless functions locally:
+
+```bash
+# 1. Clone & install dependencies
+git clone https://github.com/mahik2007/AIRWISE.git
+cd AIRWISE
+npm install
+cd frontend && npm install && cd ..
+
+# 2. Configure local environment
+Copy-Item .env.example .env    # On Windows
+# cp .env.example .env        # On macOS/Linux
+
+# 3. Run full-stack Netlify dev environment
+npx netlify dev
+# 🚀 Full-stack app live on http://localhost:8888
+# 💻 Functions live on http://localhost:8888/.netlify/functions/
+```
+
+Alternatively, you can test the standalone frontend and backend runners:
+```bash
+# Build frontend
+npm run build
+
+# Run all test suites (Backend + Frontend + Netlify Functions)
+npm test
 ```
 
 ---
@@ -103,14 +195,14 @@ sequenceDiagram
     autonumber
     actor User as 👤 Citizen
     participant Client as 💻 React App
-    participant Server as ⚙️ Express Backend
+    participant NetlifyFn as ⚡ Netlify Function (/api/chat)
     participant Gemini as 🧠 Gemini 2.5 Flash
 
     User->>Client: "Can I go for a run right now?"
-    Client->>Server: POST /api/chat { location, AQI: 155, PM2.5: 80.1, role: "caregiver" }
-    Server->>Gemini: System Context: Real telemetry + Lifestyle constraint
-    Gemini-->>Server: Structured JSON { recommendation, whyItMatters, practicalSteps, expectedBenefit }
-    Server-->>Client: Clean, formatted response
+    Client->>NetlifyFn: POST /api/chat { location, AQI: 155, PM2.5: 80.1, role: "caregiver" }
+    NetlifyFn->>Gemini: System Context: Real telemetry + Lifestyle constraint
+    Gemini-->>NetlifyFn: Structured JSON { recommendation, whyItMatters, practicalSteps, expectedBenefit }
+    NetlifyFn-->>Client: Clean, formatted response
     Client-->>User: 💡 "Postpone morning run indoors; morning inversion traps 80.1 µg/m³ PM2.5"
 ```
 
@@ -124,15 +216,6 @@ sequenceDiagram
   Commute masks,         Metro/carpool shift,   Safe airing window,    Elderly protection,
   library filtration,    internal AC recirc,    kitchen chimney hack,  cancel morning walks,
   indoor sports.         off-peak errands.      wet microfiber mop.    oximeter checks.
-```
-
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│  07:30 AM - 09:30 AM • Peak Morning Commute                      [✅ Completed & Logged] │
-│  ⚠️ Heavy thermal inversion peak. Avoid open two-wheelers; use electric metro/shared cab.│
-│  Action: Switch car cabin ventilation to internal recirculation mode.                  │
-│  ✨ Avoids ~850g CO2 tailpipe equivalent & 0.12g particulate inhalation                 │
-└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -175,70 +258,19 @@ sequenceDiagram
    └───────────────────────────────┘
 ```
 
-```
-   🏆 MY IMPACT DASHBOARD (Stored in LocalStorage)
-   ┌────────────────────────┬────────────────────────┬────────────────────────┐
-   │  🌿 4.28 kg CO2        │  💨 0.725 g PM2.5      │  ⭐ 6 Actions          │
-   │  Cumulative Avoided    │  Particulates Avoided  │  Habit Streak: Level 2 │
-   └────────────────────────┴────────────────────────┴────────────────────────┘
-```
-
----
-
-## 🔬 Scientific Scale Integrity
-
-```
-   US AQI Scale (EPA Standard)
-   0 ──────── 50 ─────── 100 ─────── 150 ─────── 200 ─────── 300 ─────── 500
-   │   Good   │ Moderate │ Sensitive │ Unhealthy │ Very Unh. │ Hazardous │
-   └──────────┴──────────┴───────────┴───────────┴───────────┴───────────┘
-   
-   European AQI (EAQI)
-   0 ─────── 20 ──────── 40 ──────── 60 ──────── 80 ──────── 100+
-   │   Good  │   Fair   │  Moderate │    Poor   │  Very Poor │
-   └─────────┴──────────┴───────────┴───────────┴────────────┘
-```
-
-*AIRWISE clearly separates Open-Meteo US AQI and European AQI from Indian CPCB National AQI.*
-
----
-
-## ⚡ 60-Second Quickstart
-
-```bash
-# 1. Clone & enter repository
-git clone https://github.com/mahik2007/AIRWISE.git
-cd AIRWISE
-
-# 2. Setup backend environment
-Copy-Item .env.example backend/.env    # (On Windows)
-# cp .env.example backend/.env        # (On macOS/Linux)
-
-# 3. Start Backend (Terminal 1)
-cd backend && npm install && npm run dev
-# 🚀 Running on http://localhost:5000
-
-# 4. Start Frontend (Terminal 2)
-cd ../frontend && npm install && npm run dev
-# 💻 Running on http://localhost:5173
-```
-
 ---
 
 ## 🧪 Verified Test Suite
 
 ```bash
-# Run backend tests (Breakpoints & ARAI Emission Mathematics)
-cd backend && npm test
-
-# Run frontend tests (Formatters & Color Classification)
-cd frontend && npx vitest run
+npm test
 ```
 
 ```
  ✓ src/utils/aqiAndEmissions.test.ts (7 tests)
+ ✓ src/utils/netlifyFunctions.test.ts (5 tests)
  ✓ src/utils/formatters.test.ts (4 tests)
- Test Files  2 passed (2) | Tests 11 passed (11)
+ Test Files  3 passed (3) | Tests 16 passed (16)
 ```
 
 ---
@@ -246,6 +278,6 @@ cd frontend && npx vitest run
 <div align="center">
 
 **PromptWars Virtual by Hack2Skill — Challenge 6: Urban Air Quality Assistant**  
-*Built with Google Antigravity • Powered by Google Gemini 2.5 Flash*
+*Built with Google Antigravity • Powered by Google Gemini 2.5 Flash on Netlify*
 
 </div>

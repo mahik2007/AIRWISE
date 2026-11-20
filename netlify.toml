@@ -1,0 +1,36 @@
+[build]
+  base = ""
+  publish = "frontend/dist"
+  command = "npm run build"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["netlify/functions/**"]
+
+# API Redirects to Netlify Functions
+[[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+
+[[redirects]]
+  from = "/api/air-quality"
+  to = "/.netlify/functions/air-quality"
+  status = 200
+
+[[redirects]]
+  from = "/api/geocode"
+  to = "/.netlify/functions/geocode"
+  status = 200
+
+[[redirects]]
+  from = "/api/calculator/transport"
+  to = "/.netlify/functions/calculator-transport"
+  status = 200
+
+# SPA client-side fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
