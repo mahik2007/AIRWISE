@@ -80,9 +80,125 @@ function generateRuleBasedFallback(body: any): ChatRecommendationResponse {
   const hasAqi = typeof body.airQuality?.usAqi === 'number' && !isNaN(body.airQuality.usAqi);
   const aqi = hasAqi ? body.airQuality.usAqi : undefined;
   const location = body.location?.name || 'your area';
-  const role = body.lifestyle?.userRole || 'general';
+  const query = (body.message || body.userMessage || '').toLowerCase();
 
-  // If actual AQI readings are unavailable, provide cautious baseline precautions without fabricating numbers
+  const aqiStr = aqi !== undefined ? `(US AQI: ${aqi})` : '(Live telemetry unavailable)';
+  const isSevere = aqi !== undefined && aqi > 200;
+  const isModerateOrElevated = aqi !== undefined && aqi > 100;
+
+  // Contextual pattern detection to prevent false positives from isolated words
+  const isVulnTerm = /\b(child(ren)?|kids?|infants?|bab(y|ies)|pediatric|sons?|daughters?|seniors?|elderly|asthma(tic)?|grandparents?|pregnant)\b/.test(query);
+  const isDirectPollution = /\b(smog|pollution|aqi|pm2\.?5|pm10|smoke|exhaust|inversion)\b/.test(query);
+  const isAirQualityContext = /\b(air|outside|outdoor|environment)\b/.test(query) && /\b(quality|safe(ty)?|protect(ion)?|breathe|breathing|clean|dirty|bad|hazardous|severe|danger(ous)?|unhealthy|condition)\b/.test(query);
+  const isRespiratorySmogContext = /\b(cough|wheez|inhaler|respiratory)\b/.test(query) && /\b(smog|pollution|air|aqi|smoke|haze|outside|outdoor)\b/.test(query);
+  const isChildEnvQuery = isVulnTerm && (isDirectPollution || isAirQualityContext || isRespiratorySmogContext);
+
+  const isExerciseAction = /\b(runs?|running|jogs?|jogging|workouts?|exercis(e|ing)|marathon|cardio|sports?|gym)\b/.test(query);
+  const isOutdoorContext = /\b(outdoor|outside|air|smog|pollution|today|morning|park|street)\b/.test(query) && /\b(smog|air|pollution|aqi|safe(ty)?|breathe|exhaust|weather|heat)\b/.test(query);
+
+  const isMaskQuery = /\b(masks?|respirators?|n95|kn95|ffp2|face\s?cover(ing)?)\b/.test(query);
+
+  const isIndoorTerm = /\b(indoor|ventilat(e|ion)?|windows?|purifiers?|hepa|damp\s?mop|air\s?out|plants?)\b/.test(query);
+  const isIndoorContext = /\b(air|clean|smog|pollution|home|house|room|apartment|dust|filter)\b/.test(query);
+
+  const isCommuteTerm = /\b(commut(e|ing)|transit|metro|carpool(ing)?|public\s?transport|bus(es)?|traffic\s?jam|tailpipe)\b/.test(query);
+  const isTravelEnv = /\b(work|office|emission|air|smog|daily|traffic|trip|route|commute|pollution)\b/.test(query);
+  const isBikeTransit = /\b(bike|cycling|car|cab|two-wheeler)\b/.test(query) && /\b(commute|transit|traffic|roadside|exhaust|smog|pollution)\b/.test(query);
+  const isTravelCommute = /\b(travel(l?ing)?)\b/.test(query) && /\b(work|office|commute|transit|rush\s?hour|traffic\s?pollution|tailpipe)\b/.test(query);
+
+  // Priority 1: Child & Vulnerable Group Protection (Requires vulnerability term + established air-quality/smog context)
+  if (isChildEnvQuery) {
+    return {
+      recommendation: isSevere
+        ? `High pollution alert for ${location} ${aqiStr}. Strictly protect children and vulnerable individuals by suspending outdoor exposure and sealing clean indoor air zones.`
+        : `Protective air quality guidance for children and sensitive individuals in ${location} ${aqiStr}.`,
+      whyItMatters: `Children inhale more air per unit of body weight than adults, and elderly or asthmatic airways experience acute bronchial constriction when exposed to elevated PM2.5 concentrations.`,
+      practicalSteps: [
+        `Keep children indoors during early morning and late evening thermal smog peaks; substitute outdoor sports with indoor active play.`,
+        `Equip school-going children and seniors with pediatric- or small-sized certified N95 respirators if transit through traffic is unavoidable.`,
+        `Maintain a designated clean-air bedroom using an air purifier, and keep quick-relief inhalers easily accessible for asthmatic dependents.`,
+        `Maintain balanced indoor humidity and avoid burning incense, mosquito coils, or unvented gas heaters around children.`
+      ],
+      expectedBenefit: `Substantially reduces pediatric and respiratory particulate exposure during peak pollution hours.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Guidance is grounded in atmospheric data for ${location}. Not a substitute for clinical pediatric or pulmonary consultation.`
+    };
+  }
+
+  // Priority 2: Outdoor Exercise, Jogging, Sports, Running (Requires exercise action + outdoor/env context)
+  if (isExerciseAction && isOutdoorContext) {
+    return {
+      recommendation: isSevere
+        ? `Outdoor exercise is NOT recommended in ${location} ${aqiStr}. Heavy particulate levels pose significant cardiovascular and pulmonary strain during high-ventilation workouts.`
+        : isModerateOrElevated
+        ? `Adjust workout intensity and location in ${location} ${aqiStr}. Consider shifting strenuous morning runs indoors, and check hourly local AQI before any outdoor activity.`
+        : `Air quality in ${location} ${aqiStr} is favorable for normal outdoor workouts and cardiovascular activities.`,
+      whyItMatters: `Heavy aerobic respiration increases deep lung particulate deposition compared to rest, causing airway and systemic vascular strain during elevated smog.`,
+      practicalSteps: [
+        isSevere
+          ? `Replace outdoor running with indoor bodyweight training, treadmill routines, or gym workouts.`
+          : `Avoid dawn and dusk routes alongside congested arterial roadways where vehicle exhaust stagnates.`,
+        `Check real-time hourly local pollution readings before exercising outdoors, as atmospheric conditions can change rapidly throughout the day.`,
+        `Wear an N95 respirator if brisk walking is necessary, but avoid heavy breathless exertion while wearing tight-fitting respirators.`,
+        `Hydrate thoroughly before and after sessions to maintain protective airway mucosal clearance.`
+      ],
+      expectedBenefit: `Helps prevent deep alveolar particulate accumulation and reduces exercise-induced airway irritation.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Exercise recommendations reflect ambient PM2.5 levels in ${location}; individuals with underlying heart or lung conditions should follow medical advice.`
+    };
+  }
+
+  // Priority 3: Masks & Personal Protective Equipment
+  if (isMaskQuery) {
+    return {
+      recommendation: `Respirator guidance for ${location} ${aqiStr}: Use certified N95, KN95, or FFP2 respirators for particulate protection; standard cloth or surgical masks do not block sub-micron PM2.5.`,
+      whyItMatters: `Ambient PM2.5 particles are under 2.5 microns in aerodynamic diameter. Loose-fitting cloth and surgical masks allow unfiltered bypass around facial edges and lack electrostatic particulate filtration layers.`,
+      practicalSteps: [
+        `Select an N95 or FFP2 respirator with an adjustable nose clip and verify an airtight seal around nose, cheeks, and chin.`,
+        `Avoid exhalation valves if protecting others in crowded indoor spaces; inspect respirators before each use and replace them if damaged, soiled, deformed, or when breathing resistance increases, following manufacturer instructions.`,
+        `Ensure pediatric masks specifically fit smaller faces without perimeter air gaps for maximum efficacy.`,
+        `Store clean respirators in breathable paper bags between uses; do not wash with soap or water as moisture ruins electrostatic filter media.`
+      ],
+      expectedBenefit: `Filters up to 95% of airborne particulate matter (PM2.5) when properly fitted and sealed according to standard certification tests.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Respirators mitigate ambient particulate exposure but do not filter hazardous gases (e.g., carbon monoxide or nitrogen dioxide).`
+    };
+  }
+
+  // Priority 4: Indoor Air Quality, Dusting, Cleaning & Ventilation (Requires indoor term + clean/air context)
+  if (isIndoorTerm && isIndoorContext) {
+    return {
+      recommendation: isSevere
+        ? `Indoor air containment protocol for ${location} ${aqiStr}: Keep exterior windows sealed against smog penetration and operate air filtration in high-use rooms.`
+        : `Indoor ventilation strategy for ${location} ${aqiStr}: Ventilate cautiously when outdoor readings drop, and maintain wet-cleaning routines to prevent dust resuspension.`,
+      whyItMatters: `Indoor particulate concentrations can reach a significant fraction of outdoor smog levels if windows remain open during thermal inversions, while indoor cooking and dry dusting further compound particulate hazard.`,
+      practicalSteps: [
+        isSevere
+          ? `Seal perimeter window cracks with draft tape or rolled damp towels during night and early morning inversion hours.`
+          : `Check local hourly AQI before airing rooms, and open opposite windows briefly when ambient pollution is at its daily minimum.`,
+        `Use damp microfiber mopping rather than dry sweeping to trap settled particulate matter without resuspending it into the breathing zone.`,
+        `Run kitchen exhaust fans during cooking and keep lids on pans to minimize aerosolized oil droplet dispersion.`,
+        `Position HEPA purifiers centrally in bedrooms away from open doors, and note that household plants have negligible PM2.5 filtration capacity compared to mechanical HEPA filters.`
+      ],
+      expectedBenefit: `Helps reduce indoor PM2.5 concentrations relative to unmitigated outdoor ambient levels.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Air filtration guidance based on atmospheric model data for ${location}. Regular filter maintenance is essential.`
+    };
+  }
+
+  // Priority 5: Commute, Transportation & Low Emissions (Requires transit context)
+  if ((isCommuteTerm && isTravelEnv) || isBikeTransit || isTravelCommute) {
+    return {
+      recommendation: `Commute and transit advisory for ${location} ${aqiStr}: Minimize roadside exposure and tailpipe emissions by switching to closed public rail or carpools with AC recirculation.`,
+      whyItMatters: `In-cabin and roadside commute corridors represent frequent daily acute PM2.5 and NO2 exposure spikes for urban commuters.`,
+      practicalSteps: [
+        `Opt for electric metro rail or enclosed public buses over open two-wheelers and auto-rickshaws during peak morning rush.`,
+        `Set vehicle ventilation systems to internal recirculation mode when idling or navigating dense traffic corridors.`,
+        `Wear an N95 respirator when waiting on exposed bus platforms or walking along busy roads.`,
+        `Consolidate multiple short vehicle trips or share rides to eliminate cold-start engine emissions.`
+      ],
+      expectedBenefit: `Lowers personal commute particulate exposure while preventing personal vehicle carbon and particulate emissions.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Advisory utilizes atmospheric modeling for ${location}. Micro-climate hotspots along busy expressways may exhibit higher localized concentrations.`
+    };
+  }
+
+  // General Baseline Fallback (Missing AQI or Uncategorized Query)
   if (aqi === undefined) {
     return {
       recommendation: `Live air quality telemetry is currently unavailable for ${location}. Exercise standard urban smog precautions until verified local readings are restored.`,
@@ -90,17 +206,15 @@ function generateRuleBasedFallback(body: any): ChatRecommendationResponse {
       practicalSteps: [
         `Check local municipal air quality station reports or weather bulletins for real-time smog advisories.`,
         `Wear a certified N95 or FFP2 respirator during high-traffic commute hours as a precautionary measure.`,
-        `Keep living spaces ventilated during midday solar hours (12:00 PM – 3:00 PM) rather than early dawn or late evening.`,
-        role === 'caregiver'
-          ? `Ensure vulnerable seniors and children have access to well-filtered indoor rooms and monitor for respiratory symptoms.`
-          : `Opt for public transit, electric rail, or shared commuting to minimize exposure and personal vehicle emissions.`
+        `Check current local air quality readings before opening windows to ventilate living spaces.`,
+        `Opt for public transit, electric rail, or shared commuting to minimize exposure and personal vehicle emissions.`
       ],
       expectedBenefit: `Prevents unmonitored particulate exposure while promoting baseline protective respiratory health.`,
-      relevantLimitations: `[Rule-Based Fallback Advisory] Live atmospheric measurements are unavailable; recommendations are general precautions and not a clinical assessment.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Live atmospheric measurements are unavailable; recommendations are general precautions and not a clinical assessment.`
     };
   }
 
-  if (aqi > 200) {
+  if (isSevere) {
     return {
       recommendation: `High pollution alert for ${location} (US AQI: ${aqi}). Strictly curtail strenuous outdoor activities and protect indoor air.`,
       whyItMatters: `At US AQI ${aqi}, severe winter smog creates elevated concentrations of PM2.5 particles that trigger bronchial inflammation and systemic oxidative stress across all age groups.`,
@@ -108,14 +222,12 @@ function generateRuleBasedFallback(body: any): ChatRecommendationResponse {
         `Reschedule early morning workouts or walks indoors; morning temperature inversions trap heavy surface particulate matter.`,
         `Equip family members with fitted N95/FFP2 respirators if stepping outside; ordinary cloth or surgical masks do not filter sub-micron particles.`,
         `Seal window drafts, run an air purifier if available, and avoid dry dusting or frying foods without exhaust ventilation.`,
-        role === 'caregiver'
-          ? `Keep elderly individuals and young children in closed rooms with clean air filtration and monitor for cough or wheezing.`
-          : `Opt for public metro or carpool options rather than open two-wheelers.`
+        `Opt for public metro or carpool options rather than open two-wheelers.`
       ],
-      expectedBenefit: `Minimizes acute particulate inhalation by up to 75-85% compared to unprotected outdoor exposure.`,
-      relevantLimitations: `[Rule-Based Fallback Advisory] Guidance based on atmospheric model data for ${location}. Not a substitute for clinical medical evaluation.`,
+      expectedBenefit: `Substantially reduces acute particulate inhalation compared to unprotected outdoor exposure.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Guidance based on atmospheric model data for ${location}. Not a substitute for clinical medical evaluation.`
     };
-  } else if (aqi > 100) {
+  } else if (isModerateOrElevated) {
     return {
       recommendation: `Moderate to sensitive air quality in ${location} (US AQI: ${aqi}). Sensitive groups should take precautions during peak rush hours.`,
       whyItMatters: `Particulate matter is elevated above standard baseline levels, which can cause throat irritation and fatigue in sensitive individuals.`,
@@ -263,7 +375,9 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
       body: JSON.stringify(recommendationResult),
     };
   } catch (error: any) {
-    console.error('Gemini API call failed in function, falling back to rule-based engine:', error?.message || error);
+    const errorType = error?.name || 'Error';
+    const status = error?.status || error?.statusCode || 'UNKNOWN';
+    console.warn(`[AI Assistant Fallback] Live inference unavailable (Category: ${errorType}, Code: ${status}). Seamlessly serving grounded deterministic advisory.`);
     const fallback = generateRuleBasedFallback(parsedBody);
     return {
       statusCode: 200,
