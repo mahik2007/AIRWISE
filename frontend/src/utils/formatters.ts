@@ -75,6 +75,16 @@ export function getEuropeanAqiBadge(aqi: number): {
   }
 }
 
+// Indian CPCB National Air Quality Index (NAQI) Breakpoints (0-50 Good, 51-100 Satisfactory, 101-200 Moderate, 201-300 Poor, 301-400 Very Poor, 401-500 Severe)
+export function getCpcbAqiCategory(aqi: number): string {
+  if (aqi <= 50) return 'Good';
+  if (aqi <= 100) return 'Satisfactory';
+  if (aqi <= 200) return 'Moderate';
+  if (aqi <= 300) return 'Poor';
+  if (aqi <= 400) return 'Very Poor';
+  return 'Severe';
+}
+
 export function formatTime(isoString: string): string {
   try {
     const d = new Date(isoString);

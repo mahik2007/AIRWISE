@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getAqiColor, getEuropeanAqiBadge, formatTime, formatDate } from './formatters';
+import { getAqiColor, getEuropeanAqiBadge, getCpcbAqiCategory, formatTime, formatDate } from './formatters';
 
 describe('Frontend Formatters & Color Mappings', () => {
   it('correctly returns styling metadata for Good AQI', () => {
@@ -24,6 +24,15 @@ describe('Frontend Formatters & Color Mappings', () => {
     expect(getEuropeanAqiBadge(15).category).toBe('Good');
     expect(getEuropeanAqiBadge(55).category).toBe('Moderate');
     expect(getEuropeanAqiBadge(112).category).toBe('Extremely Poor');
+  });
+
+  it('correctly categorizes Indian CPCB NAQI categories', () => {
+    expect(getCpcbAqiCategory(35)).toBe('Good');
+    expect(getCpcbAqiCategory(85)).toBe('Satisfactory');
+    expect(getCpcbAqiCategory(160)).toBe('Moderate');
+    expect(getCpcbAqiCategory(260)).toBe('Poor');
+    expect(getCpcbAqiCategory(360)).toBe('Very Poor');
+    expect(getCpcbAqiCategory(460)).toBe('Severe');
   });
 
   it('formats dates and times gracefully', () => {
