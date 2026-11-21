@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getUsAqiCategory, getEuropeanAqiCategory, getEuropeanAqiBadge } from './aqiCalculators.js';
+import { getUsAqiCategory, getEuropeanAqiCategory, getEuropeanAqiBadge, getCpcbAqiCategory } from './aqiCalculators.js';
 import { calculateTripSavings } from './emissionModels.js';
 
 describe('AQI Category Calculators & Scale Verification', () => {
@@ -40,6 +40,15 @@ describe('AQI Category Calculators & Scale Verification', () => {
     const badgeExtreme = getEuropeanAqiBadge(120);
     expect(badgeExtreme.category).toBe('Extremely Poor');
     expect(badgeExtreme.badge).toContain('purple');
+  });
+
+  it('evaluates CPCB NAQI categories correctly', () => {
+    expect(getCpcbAqiCategory(30)).toBe('Good');
+    expect(getCpcbAqiCategory(80)).toBe('Satisfactory');
+    expect(getCpcbAqiCategory(150)).toBe('Moderate');
+    expect(getCpcbAqiCategory(250)).toBe('Poor');
+    expect(getCpcbAqiCategory(350)).toBe('Very Poor');
+    expect(getCpcbAqiCategory(450)).toBe('Severe');
   });
 });
 

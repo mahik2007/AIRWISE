@@ -60,6 +60,23 @@ describe('Netlify Functions Verification', () => {
     expect(Array.isArray(body.practicalSteps)).toBe(true);
     expect(body.expectedBenefit).toBeDefined();
     expect(body.relevantLimitations).toBeDefined();
+    expect(body.relevantLimitations).toContain('[Rule-Based Fallback Advisory]');
+  });
+
+  it('chat function handles missing AQI gracefully without inventing numbers', async () => {
+    const res = await chatHandler({
+      httpMethod: 'POST',
+      body: JSON.stringify({
+        message: 'What precautions should I take today?',
+        location: { name: 'UnknownTown' },
+        lifestyle: { userRole: 'working_professional' }
+      })
+    });
+    expect(res.statusCode).toBe(200);
+    const body = JSON.parse(res.body);
+    expect(body.recommendation).toContain('telemetry is currently unavailable');
+    expect(body.recommendation).not.toMatch(/US AQI: \d+/);
+    expect(body.relevantLimitations).toContain('[Rule-Based Fallback Advisory]');
   });
 
   it('calculator-transport function calculates correct ARAI/DEFRA savings', async () => {

@@ -16,9 +16,10 @@ export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLo
   const [selectedPersona, setSelectedPersona] = useState<PersonaType>('working_professional');
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
 
-  const currentAqi = airQualityData?.current.usAqi ?? 140;
-  const isHighPollution = currentAqi > 150;
-  const cityName = airQualityData?.location.name || 'your city';
+  const currentAqi = airQualityData?.current?.usAqi;
+  const isAqiAvailable = typeof currentAqi === 'number' && !isNaN(currentAqi);
+  const isHighPollution = isAqiAvailable && currentAqi > 150;
+  const cityName = airQualityData?.location?.name || 'your city';
 
   const toggleStep = (stepId: string, title: string, co2 = 120, pm = 0.02) => {
     const isNowDone = !completedSteps[stepId];
@@ -222,8 +223,17 @@ export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLo
             <h2 className="text-xl font-bold text-slate-100">Smart Daily Routine Planner</h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Dynamically customized schedule for <strong className="text-emerald-300">{cityName}</strong>{' '}
-            (Current US AQI: <span className="font-bold text-slate-200">{currentAqi}</span>)
+            {isAqiAvailable ? (
+              <>
+                Dynamically customized schedule for <strong className="text-emerald-300">{cityName}</strong>{' '}
+                (Current US AQI: <span className="font-bold text-slate-200">{currentAqi}</span>)
+              </>
+            ) : (
+              <>
+                Baseline schedule for <strong className="text-emerald-300">{cityName}</strong>{' '}
+                <span className="text-amber-400/90 font-medium">(Live AQI telemetry unavailable)</span>
+              </>
+            )}
           </p>
         </div>
 
@@ -231,6 +241,13 @@ export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLo
           <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span>High Smog Protocol Active: Outdoor workouts restricted</span>
+          </div>
+        )}
+
+        {!isAqiAvailable && (
+          <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-slate-300 text-xs font-medium">
+            <ShieldAlert className="w-4 h-4 flex-shrink-0 text-amber-400" />
+            <span>Showing standard precautions — live air quality data unavailable</span>
           </div>
         )}
       </div>

@@ -135,9 +135,28 @@ export async function generateChatRecommendation(context: ChatContextInput): Pro
  * Ensures the application is ALWAYS functionally robust and reliable during live judging!
  */
 function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendationResponse {
-  const aqi = context.airQuality?.usAqi ?? 120;
+  const hasAqi = typeof context.airQuality?.usAqi === 'number' && !isNaN(context.airQuality.usAqi);
+  const aqi = hasAqi ? context.airQuality.usAqi : undefined;
   const location = context.location?.name || 'your area';
   const role = context.lifestyle?.userRole || 'general';
+
+  // If actual AQI readings are unavailable, provide cautious baseline precautions without fabricating numbers
+  if (aqi === undefined) {
+    return {
+      recommendation: `Live air quality telemetry is currently unavailable for ${location}. Exercise standard urban smog precautions until verified local readings are restored.`,
+      whyItMatters: `Without active continuous air quality monitoring data, local particulate concentrations (PM2.5/PM10) cannot be confirmed. Ambient urban exposure can vary significantly based on traffic density and weather conditions.`,
+      practicalSteps: [
+        `Check local municipal air quality station reports or weather bulletins for real-time smog advisories.`,
+        `Wear a certified N95 or FFP2 respirator during high-traffic commute hours as a precautionary measure.`,
+        `Keep living spaces ventilated during midday solar hours (12:00 PM – 3:00 PM) rather than early dawn or late evening.`,
+        role === 'caregiver'
+          ? `Ensure vulnerable seniors and children have access to well-filtered indoor rooms and monitor for respiratory symptoms.`
+          : `Opt for public transit, electric rail, or shared commuting to minimize exposure and personal vehicle emissions.`
+      ],
+      expectedBenefit: `Prevents unmonitored particulate exposure while promoting baseline protective respiratory health.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Live atmospheric measurements are unavailable; recommendations are general precautions and not a clinical assessment.`,
+    };
+  }
 
   if (aqi > 200) {
     return {
@@ -152,7 +171,7 @@ function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendatio
           : `Opt for public metro or carpool options rather than open two-wheelers.`
       ],
       expectedBenefit: `Minimizes acute particulate inhalation by up to 75-85% compared to unprotected outdoor exposure.`,
-      relevantLimitations: `Guidance based on atmospheric model data for ${location}. Not a substitute for clinical medical evaluation.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Guidance based on atmospheric model data for ${location}. Not a substitute for clinical medical evaluation.`,
     };
   } else if (aqi > 100) {
     return {
@@ -165,7 +184,7 @@ function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendatio
         `Keep indoor spaces damp-mopped rather than dry-swept to prevent resuspending settled dust.`
       ],
       expectedBenefit: `Lowers personal exposure during daily commute and prevents avoidable urban tailpipe emissions.`,
-      relevantLimitations: `Advisory utilizes Open-Meteo atmospheric forecast; check local observed stations if available.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Advisory utilizes Open-Meteo atmospheric forecast; check local observed stations if available.`,
     };
   } else {
     return {
@@ -177,7 +196,7 @@ function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendatio
         `Maintain regular car servicing and tire pressure to preserve fuel efficiency and low emissions.`
       ],
       expectedBenefit: `Promotes cardiovascular health while sustaining clean ambient air quality through low-emission choices.`,
-      relevantLimitations: `Local micro-climates near busy intersections may experience localized spikes in vehicle exhaust.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Local micro-climates near busy intersections may experience localized spikes in vehicle exhaust.`,
     };
   }
 }

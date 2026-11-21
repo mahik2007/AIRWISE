@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { AirQualityPayload, HourlyForecastPoint, DailyForecastPoint } from './types/airQuality.js';
-import { getUsAqiCategory, getEuropeanAqiCategory } from './utils/aqiCalculators.js';
+import { getUsAqiCategory, getEuropeanAqiCategory, getCpcbAqiCategory } from './utils/aqiCalculators.js';
 
 interface HandlerEvent {
   httpMethod: string;
@@ -36,14 +36,23 @@ async function fetchCPCBStationData(latitude: number, longitude: number, cityNam
     const response = await axios.get(endpoint, { timeout: 4000 });
     
     if (response.data && response.data.records && response.data.records.length > 0) {
-      const record = response.data.records[0];
-      return {
-        available: true,
-        stationName: record.station || record.station_name,
-        observedAqi: Number(record.aqi || record.pollutant_avg),
-        lastUpdated: record.last_update,
-        sourceNote: 'Official Central Pollution Control Board (CPCB) continuous monitoring station reading.',
-      };
+      // Find a record with an explicit, valid non-zero AQI number. Never use pollutant_avg as AQI.
+      const validRecord = response.data.records.find((r: any) => {
+        const rawAqi = r.aqi ?? r.AQI;
+        const num = Number(rawAqi);
+        return !isNaN(num) && num > 0;
+      });
+
+      if (validRecord) {
+        const observedAqi = Number(validRecord.aqi ?? validRecord.AQI);
+        return {
+          available: true,
+          stationName: validRecord.station || validRecord.station_name,
+          observedAqi,
+          lastUpdated: validRecord.last_update,
+          sourceNote: 'Official Central Pollution Control Board (CPCB) continuous monitoring station reading.',
+        };
+      }
     }
   } catch (err: any) {
     console.warn('CPCB data adapter query failed, falling back to atmospheric model:', err?.message || err);
@@ -155,6 +164,9 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
       };
     });
 
+    const cpcbAqi = cpcbInfo.available && cpcbInfo.observedAqi ? cpcbInfo.observedAqi : undefined;
+    const cpcbAqiCategory = cpcbAqi !== undefined ? getCpcbAqiCategory(cpcbAqi) : undefined;
+
     const payload: AirQualityPayload = {
       location: {
         name,
@@ -168,6 +180,8 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
         usAqiCategory: usAqiMeta.category,
         europeanAqi: eurAqi,
         europeanAqiCategory: eurAqiCategory,
+        cpcbAqi,
+        cpcbAqiCategory,
         pm2_5: {
           value: Math.round((currentData.pm2_5 ?? 0) * 10) / 10,
           unit: 'µg/m³',

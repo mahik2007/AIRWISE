@@ -112,21 +112,38 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             </p>
           </div>
 
-          {/* Secondary Scale: European AQI clearly identified */}
-          <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
-            {current.europeanAqi !== undefined && eurAqiBadge && (
-              <div className="text-xs">
-                <span className="text-slate-400 block text-[10px] uppercase font-mono tracking-wider">
-                  European AQI (EAQI Scale 0–100+):
-                </span>
-                <div className="flex items-center space-x-1.5 mt-0.5">
-                  <span className="font-bold text-slate-200 text-sm">{current.europeanAqi}</span>
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${eurAqiBadge.badge}`}>
-                    {eurAqiBadge.category}
+          {/* Secondary Scales: European EAQI & CPCB NAQI (when verified station data exists) */}
+          <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center space-x-4">
+              {current.europeanAqi !== undefined && eurAqiBadge && (
+                <div className="text-xs">
+                  <span className="text-slate-400 block text-[10px] uppercase font-mono tracking-wider">
+                    European AQI (EAQI Scale 0–100+):
                   </span>
+                  <div className="flex items-center space-x-1.5 mt-0.5">
+                    <span className="font-bold text-slate-200 text-sm">{current.europeanAqi}</span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${eurAqiBadge.badge}`}>
+                      {eurAqiBadge.category}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+
+              {current.cpcbAqi !== undefined && (
+                <div className="text-xs">
+                  <span className="text-slate-400 block text-[10px] uppercase font-mono tracking-wider">
+                    Indian CPCB NAQI (0–500):
+                  </span>
+                  <div className="flex items-center space-x-1.5 mt-0.5">
+                    <span className="font-bold text-emerald-300 text-sm">{current.cpcbAqi}</span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-300 border-emerald-500/40">
+                      {current.cpcbAqiCategory || 'CPCB Station'}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               onClick={() => onAskAI(`What precautions should I take in ${data.location.name} with US AQI at ${current.usAqi}?`)}
               className="text-xs font-medium text-emerald-300 hover:text-emerald-200 flex items-center ml-auto"

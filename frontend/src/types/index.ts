@@ -8,6 +8,8 @@ export interface AirQualityCurrent {
   usAqiCategory: string;
   europeanAqi?: number;
   europeanAqiCategory?: string;
+  cpcbAqi?: number;
+  cpcbAqiCategory?: string;
   pm2_5: PollutantMeasurement;
   pm10: PollutantMeasurement;
   nitrogenDioxide: PollutantMeasurement;

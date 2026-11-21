@@ -33,16 +33,7 @@ export const App: React.FC = () => {
   const [activities, setActivities] = useState<SavedActivity[]>(() => {
     try {
       const stored = localStorage.getItem('airwise_impact_activities');
-      return stored ? JSON.parse(stored) : [
-        {
-          id: 'sample-1',
-          date: new Date().toISOString(),
-          title: 'Switched car to Metro commute (10 km)',
-          category: 'commute',
-          co2SavedGrams: 1650,
-          pmAvoidedGrams: 0.29,
-        },
-      ];
+      return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
     }
