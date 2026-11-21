@@ -4,7 +4,7 @@
   "description": "AIRWISE — Your City. Your Air. Your Everyday Guide.",
   "type": "module",
   "scripts": {
-    "build:frontend": "npm --prefix frontend run build",
+    "build:frontend": "cd frontend && npm ci && npm run build",
     "build": "npm run build:frontend",
     "test:backend": "cd backend && npm test",
     "test:frontend": "cd frontend && npx vitest run",
