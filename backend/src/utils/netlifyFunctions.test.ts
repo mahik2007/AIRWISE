@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
 import { handler as geocodeHandler } from '../netlify/functions/geocode.js';
 import { handler as airQualityHandler } from '../netlify/functions/air-quality.js';
 import { handler as chatHandler } from '../netlify/functions/chat.js';
@@ -527,6 +529,176 @@ describe('Netlify Functions Verification', () => {
       expect(recCaregiverUnrelated.expectedBenefit).toBe(recWorkerUnrelated.expectedBenefit);
       expect(recCaregiverUnrelated.relevantLimitations).toBe(recWorkerUnrelated.relevantLimitations);
     });
+  });
+
+  it('production quality: no unsupported numerical exposure percentages in fallback responses', async () => {
+    const city = { name: 'Delhi' };
+    const severe = { usAqi: 240, pm2_5: 165 };
+
+    const [severeFallback, moderateFallback, lowFallback] = await Promise.all([
+      chatHandler({ httpMethod: 'POST', body: JSON.stringify({ message: 'What should I do today?', location: city, airQuality: severe }) }),
+      chatHandler({ httpMethod: 'POST', body: JSON.stringify({ message: 'What should I do today?', location: city, airQuality: { usAqi: 130, usAqiCategory: 'Unhealthy for Sensitive Groups' } }) }),
+      chatHandler({ httpMethod: 'POST', body: JSON.stringify({ message: 'What should I do today?', location: city, airQuality: { usAqi: 45, usAqiCategory: 'Good' } }) }),
+    ]);
+
+    for (const res of [severeFallback, moderateFallback, lowFallback]) {
+      const body = JSON.parse(res.body);
+      const fullText = JSON.stringify(body);
+      expect(fullText).not.toMatch(/\d+[-–]\d+%/);
+      expect(fullText).not.toContain('60-80%');
+      expect(fullText).not.toContain('75-85%');
+      expect(fullText).not.toContain('substantially reduces');
+    }
+
+    // Also verify backend geminiService parity
+    const [bSevere, bModerate, bLow] = await Promise.all([
+      generateChatRecommendation({ userMessage: 'What should I do today?', location: city, airQuality: severe }),
+      generateChatRecommendation({ userMessage: 'What should I do today?', location: city, airQuality: { usAqi: 130, usAqiCategory: 'Unhealthy for Sensitive Groups' } }),
+      generateChatRecommendation({ userMessage: 'What should I do today?', location: city, airQuality: { usAqi: 45, usAqiCategory: 'Good' } }),
+    ]);
+    for (const rec of [bSevere, bModerate, bLow]) {
+      const fullText = JSON.stringify(rec);
+      expect(fullText).not.toMatch(/\d+[-–]\d+%/);
+      expect(fullText).not.toContain('60-80%');
+      expect(fullText).not.toContain('75-85%');
+      expect(fullText).not.toContain('substantially reduces');
+    }
+  });
+
+  it('production quality: ventilation advice never assumes solar noon is safe — requires hourly AQI check', async () => {
+    const city = { name: 'Delhi' };
+
+    const [moderateRes, noAqiRes] = await Promise.all([
+      chatHandler({ httpMethod: 'POST', body: JSON.stringify({ message: 'What is the best time to ventilate my home today?', location: city, airQuality: { usAqi: 130, usAqiCategory: 'Unhealthy for Sensitive Groups' } }) }),
+      chatHandler({ httpMethod: 'POST', body: JSON.stringify({ message: 'When should I open windows to ventilate?', location: city }) }),
+    ]);
+
+    const moderateBody = JSON.parse(moderateRes.body);
+    const noAqiBody = JSON.parse(noAqiRes.body);
+
+    // Moderate: must not assert fixed solar noon window; must reference hourly check
+    const moderateText = JSON.stringify(moderateBody);
+    expect(moderateText).not.toContain('12:00 PM and 4:00 PM');
+    expect(moderateText).not.toContain('solar noon');
+    expect(moderateText).toContain('hourly');
+
+    // Missing AQI: must not assert fixed time
+    const noAqiText = JSON.stringify(noAqiBody);
+    expect(noAqiText).not.toContain('12:00 PM and 4:00 PM');
+    expect(noAqiText).not.toContain('solar noon');
+
+    // Parity: backend matches netlify for moderate ventilation query
+    const backendModerate = await generateChatRecommendation({
+      userMessage: 'What is the best time to ventilate my home today?',
+      location: city,
+      airQuality: { usAqi: 130, usAqiCategory: 'Unhealthy for Sensitive Groups' },
+    });
+    expect(backendModerate.recommendation).toBe(moderateBody.recommendation);
+    expect(backendModerate.practicalSteps).toEqual(moderateBody.practicalSteps);
+    expect(JSON.stringify(backendModerate)).not.toContain('12:00 PM and 4:00 PM');
+    expect(JSON.stringify(backendModerate)).not.toContain('solar noon');
+  });
+
+  it('production quality: indoor telemetry limitation is disclosed in indoor/ventilation fallback', async () => {
+    const city = { name: 'Delhi' };
+    const severe = { usAqi: 240, pm2_5: 165 };
+    const moderate = { usAqi: 130, usAqiCategory: 'Unhealthy for Sensitive Groups' };
+    const testCases = [
+      { message: 'What is the best time to ventilate my home today?', aqi: severe, expectedType: 'containment' },
+      { message: 'How do I keep my indoor air clean during smog?', aqi: severe, expectedType: 'containment' },
+      { message: 'Should I open windows or use an air purifier indoors?', aqi: severe, expectedType: 'containment' },
+      { message: 'When should I open windows to ventilate the house?', aqi: moderate, expectedType: 'ventilation' },
+    ];
+
+    for (const { message, aqi, expectedType } of testCases) {
+      const netlifyRes = await chatHandler({
+        httpMethod: 'POST',
+        body: JSON.stringify({ message, location: city, airQuality: aqi }),
+      });
+      const netlifyBody = JSON.parse(netlifyRes.body);
+      const backendBody = await generateChatRecommendation({ userMessage: message, location: city, airQuality: aqi });
+
+      // 1. Every intended query MUST trigger indoor air quality intent (fails if intent detection missed)
+      if (expectedType === 'containment') {
+        expect(netlifyBody.recommendation).toContain('Indoor air containment protocol');
+        expect(backendBody.recommendation).toContain('Indoor air containment protocol');
+      } else {
+        expect(netlifyBody.recommendation).toContain('Indoor ventilation strategy');
+        expect(backendBody.recommendation).toContain('Indoor ventilation strategy');
+      }
+
+      // 2. Both implementations independently must disclose that indoor sensors are unmonitored
+      expect(netlifyBody.relevantLimitations).toContain('unmonitored');
+      expect(netlifyBody.relevantLimitations).toContain('no connected indoor sensors');
+      expect(backendBody.relevantLimitations).toContain('unmonitored');
+      expect(backendBody.relevantLimitations).toContain('no connected indoor sensors');
+
+      // 3. Parity: full 5-field equality between Netlify and backend
+      expect(netlifyBody.recommendation).toBe(backendBody.recommendation);
+      expect(netlifyBody.whyItMatters).toBe(backendBody.whyItMatters);
+      expect(netlifyBody.practicalSteps).toEqual(backendBody.practicalSteps);
+      expect(netlifyBody.expectedBenefit).toBe(backendBody.expectedBenefit);
+      expect(netlifyBody.relevantLimitations).toBe(backendBody.relevantLimitations);
+    }
+  });
+
+  it('production quality: general AQI fallbacks disclose indoor air is unmonitored', async () => {
+    const city = { name: 'Delhi' };
+
+    const [moderateBackend, lowBackend, moderateNetlify, lowNetlify] = await Promise.all([
+      generateChatRecommendation({ userMessage: 'What should I do today?', location: city, airQuality: { usAqi: 130, usAqiCategory: 'Unhealthy for Sensitive Groups' } }),
+      generateChatRecommendation({ userMessage: 'What should I do today?', location: city, airQuality: { usAqi: 45, usAqiCategory: 'Good' } }),
+      chatHandler({ httpMethod: 'POST', body: JSON.stringify({ message: 'What should I do today?', location: city, airQuality: { usAqi: 130, usAqiCategory: 'Unhealthy for Sensitive Groups' } }) }),
+      chatHandler({ httpMethod: 'POST', body: JSON.stringify({ message: 'What should I do today?', location: city, airQuality: { usAqi: 45, usAqiCategory: 'Good' } }) }),
+    ]);
+
+    for (const rec of [moderateBackend, lowBackend]) {
+      expect(rec.relevantLimitations).toContain('unmonitored');
+    }
+    for (const res of [moderateNetlify, lowNetlify]) {
+      const body = JSON.parse(res.body);
+      expect(body.relevantLimitations).toContain('unmonitored');
+    }
+
+    // First ventilation step must reference AQI check, not a fixed clock time
+    expect(moderateBackend.practicalSteps[0]).toContain('hourly');
+    expect(lowBackend.practicalSteps[0]).toContain('hourly');
+    expect(moderateBackend.practicalSteps[0]).not.toContain('12:00 PM');
+    expect(lowBackend.practicalSteps[0]).not.toContain('12:00 PM');
+  });
+
+  it('production quality: static marketing copy contains no fixed-time ventilation/pollution claims', () => {
+    // Read frontend source files directly to guard against regression of fixed-time claims
+    const root = resolve(__dirname, '../../../');
+    const landingPage = readFileSync(resolve(root, 'frontend/src/pages/LandingPage.tsx'), 'utf-8');
+    const airDashboard = readFileSync(resolve(root, 'frontend/src/components/dashboard/AirDashboard.tsx'), 'utf-8');
+    const indoorGuardian = readFileSync(resolve(root, 'frontend/src/components/indoor/IndoorAirGuardian.tsx'), 'utf-8');
+    const dailyPlanner = readFileSync(resolve(root, 'frontend/src/components/planner/DailyPlanner.tsx'), 'utf-8');
+
+    const allSources = [
+      { name: 'LandingPage.tsx', src: landingPage },
+      { name: 'AirDashboard.tsx', src: airDashboard },
+      { name: 'IndoorAirGuardian.tsx', src: indoorGuardian },
+      { name: 'DailyPlanner.tsx', src: dailyPlanner },
+    ];
+
+    for (const { name, src } of allSources) {
+      // No fixed "1:00 PM solar warming" claim
+      expect(src, `${name}: fixed 1:00 PM solar warming claim`).not.toContain('1:00 PM when solar warming');
+      // No "solar noon" ventilation claim
+      expect(src, `${name}: solar noon ventilation claim`).not.toContain('solar noon');
+      // No "until solar noon" window instruction
+      expect(src, `${name}: until solar noon`).not.toContain('until solar noon');
+      // No "12:00 PM and 4:00 PM" fixed ventilation window
+      expect(src, `${name}: 12:00 PM and 4:00 PM ventilation window`).not.toContain('12:00 PM and 4:00 PM');
+      // No "solar warming dilutes" assertion
+      expect(src, `${name}: solar warming dilutes`).not.toContain('solar warming dilutes');
+    }
+
+    // LandingPage-specific: must contain the corrected guidance
+    expect(landingPage).toContain('Check current hourly air-quality readings before planning outdoor errands');
+    // AirDashboard-specific: must reference hourly AQI check for high pollution window
+    expect(airDashboard).toContain('Check current hourly AQI before airing rooms');
   });
 
   it('calculator-transport function calculates correct ARAI/DEFRA savings', async () => {

@@ -179,7 +179,7 @@ function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendatio
         `Maintain a designated clean-air bedroom using an air purifier, and keep quick-relief inhalers easily accessible for asthmatic dependents.`,
         `Maintain balanced indoor humidity and avoid burning incense, mosquito coils, or unvented gas heaters around children.`
       ],
-      expectedBenefit: `Substantially reduces pediatric and respiratory particulate exposure during peak pollution hours.`,
+      expectedBenefit: `Helps users make informed decisions and limit avoidable pediatric and respiratory particulate exposure during peak pollution hours.`,
       relevantLimitations: `[Rule-Based Fallback Advisory] Guidance is grounded in atmospheric data for ${location}. Not a substitute for clinical pediatric or pulmonary consultation.`
     };
   }
@@ -224,21 +224,26 @@ function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendatio
 
   // Priority 4: Indoor Air Quality, Dusting, Cleaning & Ventilation (Requires indoor term + clean/air context)
   if (isIndoorTerm && isIndoorContext) {
+    const isVentilationSpecific = /\b(ventilat(e|ion)?|windows?|air\s?out)\b/.test(query);
     return {
       recommendation: isSevere
         ? `Indoor air containment protocol for ${location} ${aqiStr}: Keep exterior windows sealed against smog penetration and operate air filtration in high-use rooms.`
-        : `Indoor ventilation strategy for ${location} ${aqiStr}: Ventilate cautiously when outdoor readings drop, and maintain wet-cleaning routines to prevent dust resuspension.`,
+        : isVentilationSpecific && aqi === undefined
+        ? `Ventilation guidance for ${location}: Current outdoor hourly AQI data is unavailable. A safe ventilation window cannot be determined without verified local air quality readings; keep windows latched until reliable outdoor data is confirmed.`
+        : `Indoor ventilation strategy for ${location} ${aqiStr}: Check current hourly outdoor AQI before opening windows, and air rooms briefly only if outdoor air is clean. Keep unmonitored indoor spaces clean with wet dusting.`,
       whyItMatters: `Indoor particulate concentrations can reach a significant fraction of outdoor smog levels if windows remain open during thermal inversions, while indoor cooking and dry dusting further compound particulate hazard.`,
       practicalSteps: [
         isSevere
           ? `Seal perimeter window cracks with draft tape or rolled damp towels during night and early morning inversion hours.`
-          : `Check local hourly AQI before airing rooms, and open opposite windows briefly when ambient pollution is at its daily minimum.`,
+          : aqi === undefined
+          ? `Check verified local municipal station readings before opening windows; do not assume midday is safe without current hourly measurements.`
+          : `Check verified hourly outdoor AQI before opening windows; open opposite windows briefly only when outdoor air quality is favorable.`,
         `Use damp microfiber mopping rather than dry sweeping to trap settled particulate matter without resuspending it into the breathing zone.`,
         `Run kitchen exhaust fans during cooking and keep lids on pans to minimize aerosolized oil droplet dispersion.`,
         `Position HEPA purifiers centrally in bedrooms away from open doors, and note that household plants have negligible PM2.5 filtration capacity compared to mechanical HEPA filters.`
       ],
-      expectedBenefit: `Helps reduce indoor PM2.5 concentrations relative to unmitigated outdoor ambient levels.`,
-      relevantLimitations: `[Rule-Based Fallback Advisory] Air filtration guidance based on atmospheric model data for ${location}. Regular filter maintenance is essential.`
+      expectedBenefit: `Helps users make informed decisions and limit avoidable indoor particulate buildup relative to unmitigated outdoor conditions.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Indoor air quality is unmonitored (no connected indoor sensors); recommendations reflect ambient Open-Meteo/CAMS atmospheric model data for ${location}. Regular filter maintenance is essential.`
     };
   }
 
@@ -284,7 +289,7 @@ function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendatio
         `Seal window drafts, run an air purifier if available, and avoid dry dusting or frying foods without exhaust ventilation.`,
         `Opt for public metro or carpool options rather than open two-wheelers.`
       ],
-      expectedBenefit: `Substantially reduces acute particulate inhalation compared to unprotected outdoor exposure.`,
+      expectedBenefit: `Helps users make informed decisions and limit avoidable acute particulate inhalation compared to unprotected outdoor exposure.`,
       relevantLimitations: `[Rule-Based Fallback Advisory] Guidance based on atmospheric model data for ${location}. Not a substitute for clinical medical evaluation.`
     };
   } else if (isModerateOrElevated) {
@@ -292,25 +297,25 @@ function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendatio
       recommendation: `Moderate to sensitive air quality in ${location} (US AQI: ${aqi}). Sensitive groups should take precautions during peak rush hours.`,
       whyItMatters: `Particulate matter is elevated above standard baseline levels, which can cause throat irritation and fatigue in sensitive individuals.`,
       practicalSteps: [
-        `Ventilate living spaces between 12:00 PM and 4:00 PM when solar warming dilutes surface pollution.`,
-        `Plan outdoor sports or jogging for the afternoon rather than dawn or late dusk.`,
+        `Check current hourly outdoor AQI before ventilating living spaces; avoid opening windows if outdoor smog levels rise.`,
+        `Plan outdoor sports or jogging for times when verified local hourly readings indicate lower particulate density.`,
         `Use public transit or share rides to avoid contributing to peak vehicle idle emissions.`,
         `Keep indoor spaces damp-mopped rather than dry-swept to prevent resuspending settled dust.`
       ],
-      expectedBenefit: `Lowers personal exposure during daily commute and prevents avoidable urban tailpipe emissions.`,
-      relevantLimitations: `[Rule-Based Fallback Advisory] Advisory utilizes Open-Meteo atmospheric forecast; check local observed stations if available.`,
+      expectedBenefit: `Helps users make informed decisions and limit avoidable personal exposure during daily commute and peak traffic hours.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Advisory utilizes Open-Meteo atmospheric forecast; check local observed stations if available. Local indoor air quality is unmonitored.`,
     };
   } else {
     return {
       recommendation: `Air quality in ${location} is currently within acceptable ranges (US AQI: ${aqi}). Ideal for normal daily routines.`,
       whyItMatters: `Low atmospheric particulate levels allow comfortable outdoor ventilation and cardiovascular activity without significant pollution burden.`,
       practicalSteps: [
-        `Open windows across rooms during morning hours for natural cross-ventilation.`,
+        `Check current hourly outdoor AQI before airing rooms for natural cross-ventilation.`,
         `Encourage active commuting such as walking or cycling for short trips under 3 km.`,
         `Maintain regular car servicing and tire pressure to preserve fuel efficiency and low emissions.`
       ],
       expectedBenefit: `Promotes cardiovascular health while sustaining clean ambient air quality through low-emission choices.`,
-      relevantLimitations: `[Rule-Based Fallback Advisory] Local micro-climates near busy intersections may experience localized spikes in vehicle exhaust.`,
+      relevantLimitations: `[Rule-Based Fallback Advisory] Local micro-climates near busy intersections may experience localized spikes in vehicle exhaust. Local indoor air quality is unmonitored.`,
     };
   }
 }

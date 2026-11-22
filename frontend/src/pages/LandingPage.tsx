@@ -36,7 +36,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         {/* Challenge & Tech Pill */}
         <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#122419] border border-[#23422e] text-xs text-emerald-300 mb-8 shadow-sm">
           <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-medium">PromptWars Challenge 6: Urban Air Quality Assistant</span>
+          <span className="font-medium">Urban Air Quality Intelligence</span>
           <span className="text-slate-500">•</span>
           <span className="text-slate-400">Gemini 2.5 + Open-Meteo</span>
         </div>
@@ -122,7 +122,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <h3 className="text-lg font-bold text-slate-100 mb-2">2. What should I do differently today?</h3>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                  Contextual daily plans tailored for students, working professionals, homemakers, and caregivers. Smarter commute hours, safe ventilation windows, and mask guidance.
+                  Contextual daily plans tailored for students, working professionals, homemakers, and caregivers. Smarter commute hours, evidence-based ventilation guidance, and mask advice.
                 </p>
               </div>
               <div className="mt-6 pt-4 border-t border-[#182d20] flex items-center text-xs text-teal-400 font-medium">
@@ -211,7 +211,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <strong className="text-emerald-300 block mb-1">Practical Actions:</strong>
                 <ul className="list-disc pl-4 space-y-0.5 text-slate-300">
                   <li>Switch to indoor stationary cardio or yoga today.</li>
-                  <li>Delay outdoor errands until 1:00 PM when solar warming dilutes smog.</li>
+                  <li>Check current hourly air-quality readings before planning outdoor errands. Avoid periods of elevated pollution.</li>
                 </ul>
               </div>
             </div>
