@@ -17,13 +17,13 @@ export const IndoorAirGuardian: React.FC<IndoorAirGuardianProps> = ({ airQuality
     {
       title: 'Optimal Ventilation Timing',
       icon: Wind,
-      badge: currentAqi > 180 ? 'Seal Windows' : 'Afternoon Window 12-3 PM',
+      badge: currentAqi > 180 ? 'Seal Windows' : 'Check Hourly AQI',
       badgeColor: currentAqi > 180 ? 'bg-red-500/20 text-red-300' : 'bg-emerald-500/20 text-emerald-300',
-      summary: 'Never open windows between 6:00 AM and 9:00 AM during winter. Thermal inversion traps surface exhaust and toxic PM2.5.',
+      summary: 'Before opening windows, check current hourly outdoor AQI readings. Avoid ventilating during cold morning inversion hours when ground-level exhaust stagnates.',
       details: [
-        'Ventilate only during peak solar irradiance (12:00 PM – 3:30 PM) when thermal vertical updrafts disperse stagnant surface pollutants.',
-        'Create cross-ventilation by opening two opposite windows for 15 minutes, then latch tightly.',
-        'Use draft-stopper seals or rolled towels beneath front door gaps facing shared corridors.',
+        'Ventilate only if verified hourly outdoor AQI confirms acceptable ambient conditions; never assume midday is automatically safe.',
+        'If outdoor readings are favorable, create brief cross-ventilation for 10-15 minutes, then latch windows securely.',
+        'Use draft-stopper seals or rolled towels beneath exterior doors facing corridors to limit particulate infiltration.',
       ],
       scientificWhy: 'Thermal temperature inversion occurs when cold surface air is trapped beneath warmer air aloft, compressing particulate matter close to breathing height.',
     },
@@ -80,7 +80,7 @@ export const IndoorAirGuardian: React.FC<IndoorAirGuardianProps> = ({ airQuality
             <h2 className="text-xl font-bold text-slate-100">Indoor Air Guardian</h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Science-backed indoor air quality protocol for winter smog periods.
+            Science-backed indoor air quality protocol for winter smog periods. (Note: Indoor air is unmonitored; metrics reflect outdoor ambient data).
           </p>
         </div>
 

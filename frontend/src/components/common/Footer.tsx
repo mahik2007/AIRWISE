@@ -19,7 +19,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="inline-flex items-center space-x-1.5 px-2 py-1 rounded bg-[#102017] border border-[#1b3425] text-[11px] text-emerald-300">
               <HeartHandshake className="w-3.5 h-3.5" />
-              <span>PromptWars Challenge 6</span>
+              <span>Independent Environmental Tech</span>
             </div>
           </div>
 
@@ -72,7 +72,7 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="pt-6 border-t border-[#15241b] flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500">
-          <p>© {new Date().getFullYear()} AIRWISE — Built for Hack2Skill PromptWars Virtual Challenge 6.</p>
+          <p>© {new Date().getFullYear()} AIRWISE — Urban Air Quality Intelligence & Protective Routine Guide.</p>
           <p className="mt-2 sm:mt-0">Powered by Open-Meteo, Google Gemini & React</p>
         </div>
       </div>

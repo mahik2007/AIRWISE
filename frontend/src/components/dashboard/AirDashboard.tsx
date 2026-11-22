@@ -170,10 +170,10 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
               {current.usAqi > 150
-                ? 'High particulate matter suspension. Avoid early morning jogging or vigorous outdoor workouts. Keep windows shut until solar noon.'
+                ? 'High particulate matter suspension. Avoid early morning jogging or vigorous outdoor workouts. Check current hourly AQI before airing rooms; keep windows sealed during peak smog intervals. Note: indoor air quality is unmonitored.'
                 : current.usAqi > 80
                 ? 'Particulate density is moderate. Keep indoor spaces clean with damp mopping and opt for public transit or carpooling.'
-                : 'Atmospheric dispersion is healthy. Excellent conditions for natural ventilation and outdoor physical exercise.'}
+                : 'Atmospheric dispersion is healthy. Favorable ambient conditions for outdoor physical exercise and natural ventilation.'}
             </p>
           </div>
 

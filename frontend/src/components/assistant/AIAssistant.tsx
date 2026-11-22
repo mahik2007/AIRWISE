@@ -24,7 +24,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
           'Get indoor air purification and ventilation hacks.',
           'Explore low-emission transit alternatives for your daily commute.',
         ],
-        expectedBenefit: 'Informed daily behavioral adjustments can reduce personal smog exposure by up to 60-80%.',
+        expectedBenefit: 'Informed daily behavioral adjustments help limit avoidable personal smog exposure during elevated pollution periods.',
         relevantLimitations: 'Guidance is informational and protective. Please consult medical doctors for clinical health treatments.',
       },
       timestamp: new Date().toISOString(),
