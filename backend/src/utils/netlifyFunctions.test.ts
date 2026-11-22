@@ -695,10 +695,13 @@ describe('Netlify Functions Verification', () => {
       expect(src, `${name}: solar warming dilutes`).not.toContain('solar warming dilutes');
     }
 
-    // LandingPage-specific: must contain the corrected guidance
-    expect(landingPage).toContain('Check current hourly air-quality readings before planning outdoor errands');
-    // AirDashboard-specific: must reference hourly AQI check for high pollution window
-    expect(airDashboard).toContain('Check current hourly AQI before airing rooms');
+    // LandingPage / en.json specific: must contain the corrected guidance
+    const enLocale = readFileSync(resolve(root, 'frontend/src/i18n/locales/en.json'), 'utf-8');
+    const combinedLandingText = landingPage + enLocale;
+    expect(combinedLandingText).toContain('Check current hourly air-quality readings before planning outdoor errands');
+    // AirDashboard / en.json specific: must reference hourly AQI check for high pollution window
+    const combinedDashboardText = airDashboard + enLocale;
+    expect(combinedDashboardText).toContain('Check current hourly AQI before airing rooms');
   });
 
   it('calculator-transport function calculates correct ARAI/DEFRA savings', async () => {
@@ -714,6 +717,120 @@ describe('Netlify Functions Verification', () => {
     const body = JSON.parse(res.body);
     expect(body.co2SavedGrams).toBe(1650);
     expect(body.pm25SavedGrams).toBeGreaterThan(0);
+  });
+
+  describe('Multilingual Deterministic Fallback Verification (English & Hindi)', () => {
+    const devanagariRegex = /[\u0900-\u097F]/;
+    const testCases = [
+      {
+        name: 'child protection intent',
+        message: 'How can I protect my children from smog?',
+        aqi: { usAqi: 220, pm2_5: 145 },
+      },
+      {
+        name: 'exercise intent',
+        message: 'Is it safe to run outdoors in severe smog?',
+        aqi: { usAqi: 220, pm2_5: 145 },
+      },
+      {
+        name: 'mask intent',
+        message: 'Which mask or respirator should I buy for pollution?',
+        aqi: { usAqi: 150 },
+      },
+      {
+        name: 'indoor ventilation intent',
+        message: 'When should I open windows to ventilate my home?',
+        aqi: { usAqi: 130 },
+      },
+      {
+        name: 'commute intent',
+        message: 'What is the best way to commute to office in heavy traffic smog?',
+        aqi: { usAqi: 180 },
+      },
+      {
+        name: 'general baseline intent without telemetry',
+        message: 'What should I do today?',
+        aqi: undefined,
+      },
+    ];
+
+    for (const tc of testCases) {
+      it(`generates natural Hindi fallback with exact 5-field schema for ${tc.name}`, async () => {
+        const city = { name: 'Delhi' };
+        const [backendHi, netlifyRes] = await Promise.all([
+          generateChatRecommendation({
+            userMessage: tc.message,
+            location: city,
+            airQuality: tc.aqi,
+            locale: 'hi',
+          }),
+          chatHandler({
+            httpMethod: 'POST',
+            body: JSON.stringify({
+              message: tc.message,
+              location: city,
+              airQuality: tc.aqi,
+              locale: 'hi',
+            }),
+          }),
+        ]);
+
+        expect(netlifyRes.statusCode).toBe(200);
+        const netlifyHi = JSON.parse(netlifyRes.body);
+
+        // Strict parity between backend service and Netlify serverless function
+        expect(backendHi).toEqual(netlifyHi);
+
+        // Exact 5-field schema
+        const fields = ['recommendation', 'whyItMatters', 'practicalSteps', 'expectedBenefit', 'relevantLimitations'];
+        for (const f of fields) {
+          expect(backendHi).toHaveProperty(f);
+          expect(netlifyHi).toHaveProperty(f);
+        }
+
+        // All text fields must contain Devanagari Hindi characters
+        expect(backendHi.recommendation).toMatch(devanagariRegex);
+        expect(backendHi.whyItMatters).toMatch(devanagariRegex);
+        expect(backendHi.expectedBenefit).toMatch(devanagariRegex);
+        expect(backendHi.relevantLimitations).toMatch(devanagariRegex);
+
+        expect(Array.isArray(backendHi.practicalSteps)).toBe(true);
+        expect(backendHi.practicalSteps.length).toBeGreaterThan(0);
+        for (const step of backendHi.practicalSteps) {
+          expect(step).toMatch(devanagariRegex);
+        }
+
+        // Preserves technical terms and standard disclaimers
+        expect(backendHi.relevantLimitations).toContain('[Rule-Based Fallback Advisory]');
+      });
+
+      it(`preserves default English fallback when locale is en or unspecified for ${tc.name}`, async () => {
+        const city = { name: 'Delhi' };
+        const [backendEn, netlifyRes] = await Promise.all([
+          generateChatRecommendation({
+            userMessage: tc.message,
+            location: city,
+            airQuality: tc.aqi,
+          }),
+          chatHandler({
+            httpMethod: 'POST',
+            body: JSON.stringify({
+              message: tc.message,
+              location: city,
+              airQuality: tc.aqi,
+            }),
+          }),
+        ]);
+
+        const netlifyEn = JSON.parse(netlifyRes.body);
+        expect(backendEn).toEqual(netlifyEn);
+
+        // Must not contain Devanagari when in English mode
+        expect(backendEn.recommendation).not.toMatch(devanagariRegex);
+        expect(backendEn.whyItMatters).not.toMatch(devanagariRegex);
+        expect(backendEn.practicalSteps[0]).not.toMatch(devanagariRegex);
+      });
+    }
   });
 });
 

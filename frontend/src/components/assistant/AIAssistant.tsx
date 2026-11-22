@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Bot, Send, User, Sparkles, AlertCircle, CheckCircle2, 
   HelpCircle, ShieldAlert, CornerDownRight, Loader2 
@@ -12,20 +13,23 @@ interface AIAssistantProps {
 }
 
 export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaultPrompt }) => {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language?.startsWith('hi') ? 'hi' : 'en';
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'init-1',
       role: 'assistant',
       recommendation: {
-        recommendation: `Hello! I am your AIRWISE urban air quality and sustainable routine guide. I am actively grounded in live atmospheric conditions for ${airQualityData?.location.name || 'your area'}.`,
-        whyItMatters: 'Fine particulate pollution (PM2.5) directly correlates with cardiovascular strain and respiratory airway inflammation during high-smog periods.',
+        recommendation: t('assistant.defaultWelcome', { location: airQualityData?.location.name || 'your area' }),
+        whyItMatters: t('assistant.whyItMatters'),
         practicalSteps: [
-          'Ask me about the best hours for outdoor exercise.',
-          'Get indoor air purification and ventilation hacks.',
-          'Explore low-emission transit alternatives for your daily commute.',
+          currentLang === 'hi' ? 'बाहरी व्यायाम के लिए सबसे सुरक्षित घंटों के बारे में पूछें।' : 'Ask me about the best hours for outdoor exercise.',
+          currentLang === 'hi' ? 'घर की हवा साफ रखने और सही वेंटिलेशन के तरीके जानें।' : 'Get indoor air purification and ventilation hacks.',
+          currentLang === 'hi' ? 'अपने दैनिक आवागमन के लिए कम उत्सर्जन वाले विकल्प खोजें।' : 'Explore low-emission transit alternatives for your daily commute.',
         ],
-        expectedBenefit: 'Informed daily behavioral adjustments help limit avoidable personal smog exposure during elevated pollution periods.',
-        relevantLimitations: 'Guidance is informational and protective. Please consult medical doctors for clinical health treatments.',
+        expectedBenefit: t('assistant.benefit'),
+        relevantLimitations: t('assistant.limitations'),
       },
       timestamp: new Date().toISOString(),
     },
@@ -35,7 +39,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState<'student' | 'working_professional' | 'homemaker' | 'caregiver' | 'general'>('general');
 
-  const suggestedPrompts = [
+  const suggestedPrompts = currentLang === 'hi' ? [
+    'क्या आज सुबह बाहर दौड़ना सुरक्षित है?',
+    'सर्दियों के गंभीर स्मॉग के दौरान बच्चों को कैसे सुरक्षित रखें?',
+    'आज घर में खिड़कियां खोलने का सबसे अच्छा समय क्या है?',
+    'दफ्तर जाने के लिए कम प्रदूषण वाला रास्ता या साधन सुझाएं।',
+    'क्या घरेलू पौधे वास्तव में PM2.5 हटाते हैं या मुझे HEPA फिल्टर लेना चाहिए?',
+  ] : [
     'Is it safe to go for a morning run today?',
     'How can I protect my children during severe winter smog?',
     'What is the best time to ventilate my home today?',
@@ -61,6 +71,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
     try {
       const response = await sendChatMessage({
         message: userMsg.content || '',
+        locale: currentLang,
         location: airQualityData ? {
           name: airQualityData.location.name,
           latitude: airQualityData.location.latitude,
@@ -97,7 +108,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
       const fallbackMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        content: 'Unable to connect to the assistant service right now. Please check your network or backend connection.',
+        content: t('assistant.errorNetwork'),
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
@@ -115,10 +126,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-bold shadow-md">
               <Sparkles className="w-4 h-4" />
             </div>
-            <h2 className="text-lg font-bold text-slate-100">AIRWISE Intelligence Assistant</h2>
+            <h2 className="text-lg font-bold text-slate-100">{t('assistant.title')}</h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Grounded in active data for{' '}
+            {t('assistant.subtitle')} •{' '}
             <strong className="text-emerald-300">
               {airQualityData?.location.name || 'Selected City'} (US AQI: {airQualityData?.current.usAqi ?? 'N/A'})
             </strong>
@@ -127,17 +138,17 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
 
         {/* Persona Switcher */}
         <div className="flex items-center space-x-2 bg-[#14261c] p-1.5 rounded-xl border border-[#213e2c]">
-          <span className="text-[11px] text-slate-400 pl-2">Tailor for:</span>
+          <span className="text-[11px] text-slate-400 pl-2">{t('assistant.roleLabel')}</span>
           <select
             value={userRole}
             onChange={(e) => setUserRole(e.target.value as any)}
             className="bg-[#0b140f] text-xs text-emerald-300 font-medium py-1 px-2.5 rounded-lg border border-[#1c3525] focus:outline-none"
           >
-            <option value="general">General Citizen</option>
-            <option value="student">Student</option>
-            <option value="working_professional">Working Professional</option>
-            <option value="homemaker">Homemaker</option>
-            <option value="caregiver">Caregiver (Elderly/Kids)</option>
+            <option value="general">{t('assistant.roleGeneral')}</option>
+            <option value="student">{t('assistant.roleStudent')}</option>
+            <option value="working_professional">{t('assistant.roleProfessional')}</option>
+            <option value="homemaker">{t('assistant.roleHomemaker')}</option>
+            <option value="caregiver">{t('assistant.roleCaregiver')}</option>
           </select>
         </div>
       </div>
@@ -174,14 +185,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
 
                   {/* Why it Matters */}
                   <div className="p-3 rounded-xl bg-[#14261c] border border-[#213c2c] text-xs text-slate-300 leading-relaxed">
-                    <strong className="text-slate-100 block mb-1">Scientific & Atmospheric Rationale:</strong>
+                    <strong className="text-slate-100 block mb-1">{t('assistant.whyHeading')}:</strong>
                     {msg.recommendation.whyItMatters}
                   </div>
 
                   {/* Practical Steps */}
                   {msg.recommendation.practicalSteps.length > 0 && (
                     <div className="space-y-1.5 pt-1">
-                      <span className="text-xs font-bold text-slate-200 block">Practical Steps:</span>
+                      <span className="text-xs font-bold text-slate-200 block">{t('assistant.stepHeading')}:</span>
                       <ul className="space-y-1.5">
                         {msg.recommendation.practicalSteps.map((step, idx) => (
                           <li key={idx} className="flex items-start space-x-2 text-xs text-slate-300">
@@ -197,7 +208,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
 
                   {/* Expected Benefit */}
                   <div className="text-xs text-teal-300 bg-teal-950/20 p-2.5 rounded-lg border border-teal-500/20">
-                    <strong className="text-teal-200">Expected Environmental / Exposure Benefit: </strong>
+                    <strong className="text-teal-200">{t('assistant.benefitHeading')}: </strong>
                     {msg.recommendation.expectedBenefit}
                   </div>
 
@@ -205,7 +216,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
                   <div className="text-[11px] text-slate-400 flex items-start space-x-1.5 pt-1">
                     <AlertCircle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
                     <span>
-                      <strong className="text-slate-300">Scope & Limitations: </strong>
+                      <strong className="text-slate-300">{t('assistant.limitHeading')}: </strong>
                       {msg.recommendation.relevantLimitations}
                     </span>
                   </div>
@@ -228,7 +239,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
             </div>
             <div className="p-3.5 rounded-2xl bg-[#101e16] border border-[#1e3828] text-xs text-slate-400 flex items-center space-x-2">
               <Loader2 className="w-4 h-4 text-emerald-400 animate-spin" />
-              <span>Analyzing atmospheric context with Gemini 2.5...</span>
+              <span>{t('assistant.thinking')}</span>
             </div>
           </div>
         )}
@@ -236,7 +247,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
 
       {/* Suggested Quick Prompts */}
       <div className="space-y-1.5">
-        <span className="text-[11px] text-slate-500 block">Suggested queries:</span>
+        <span className="text-[11px] text-slate-500 block">{t('assistant.suggestedTitle')}</span>
         <div className="flex flex-wrap gap-2">
           {suggestedPrompts.map((p) => (
             <button
@@ -263,7 +274,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
               handleSend();
             }
           }}
-          placeholder="Ask a question about smog protection, daily routines, or low-emission choices..."
+          placeholder={t('assistant.inputPlaceholder')}
           className="w-full p-3.5 pr-20 rounded-2xl bg-[#0f1d16] border border-[#1f3a29] text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all resize-none"
         />
         <button
@@ -271,7 +282,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
           disabled={loading || !input.trim()}
           className="absolute right-3 bottom-3.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md"
         >
-          <span>Send</span>
+          <span>{t('assistant.btnSend')}</span>
           <Send className="w-3.5 h-3.5" />
         </button>
       </div>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Wind, Activity, Bot, Calendar, Home, ArrowLeftRight, Award, Menu, X, MapPin } from 'lucide-react';
 import { LocationSearch } from './LocationSearch';
+import { LanguageSelector } from './LanguageSelector';
 import { GeocodingResult } from '../../types';
 
 interface NavbarProps {
@@ -11,16 +13,17 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selectedCity, onSelectCity }) => {
+  const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Activity },
-    { id: 'assistant', label: 'AI Assistant', icon: Bot },
-    { id: 'planner', label: 'Daily Planner', icon: Calendar },
-    { id: 'indoor', label: 'Indoor Guardian', icon: Home },
-    { id: 'greenchoice', label: 'Green Choice', icon: ArrowLeftRight },
-    { id: 'impact', label: 'My Impact', icon: Award },
+    { id: 'dashboard', label: t('nav.dashboard'), icon: Activity },
+    { id: 'assistant', label: t('nav.assistant'), icon: Bot },
+    { id: 'planner', label: t('nav.planner'), icon: Calendar },
+    { id: 'indoor', label: t('nav.indoor'), icon: Home },
+    { id: 'greenchoice', label: t('nav.greenchoice'), icon: ArrowLeftRight },
+    { id: 'impact', label: t('nav.impact'), icon: Award },
   ];
 
   return (
@@ -43,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
                   v1.0
                 </span>
               </div>
-              <p className="text-[10px] text-slate-400 hidden sm:block tracking-tight">Your City. Your Air. Your Everyday Guide.</p>
+              <p className="text-[10px] text-slate-400 hidden sm:block tracking-tight">{t('nav.tagline')}</p>
             </div>
           </div>
 
@@ -69,17 +72,19 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
             })}
           </div>
 
-          {/* Active City indicator & Quick Switcher */}
+          {/* Active City indicator, Language Selector & Quick Switcher */}
           <div className="hidden sm:flex items-center space-x-2 relative">
+            <LanguageSelector />
+
             <button
               onClick={() => setSearchOpen(!searchOpen)}
               className="flex items-center space-x-2 bg-[#122218] hover:bg-[#183022] px-3 py-1.5 rounded-full border border-[#1f3727] text-xs transition-colors cursor-pointer group"
               title="Click to change city"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-slate-400">Location:</span>
+              <span className="text-slate-400">{t('nav.location')}:</span>
               <span className="font-semibold text-emerald-300 group-hover:text-emerald-200">{selectedCity}</span>
-              <span className="text-[10px] text-slate-500 ml-1 underline underline-offset-2">Change</span>
+              <span className="text-[10px] text-slate-500 ml-1 underline underline-offset-2">{t('nav.change')}</span>
             </button>
 
             {searchOpen && onSelectCity && (
@@ -95,8 +100,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
             )}
           </div>
 
-          {/* Mobile hamburger */}
+          {/* Mobile hamburger & language */}
           <div className="flex md:hidden items-center space-x-2">
+            <LanguageSelector compact={true} />
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#14261c]"
@@ -112,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
         <div className="md:hidden bg-[#0e1b14] border-b border-[#1c2e23] px-4 pt-2 pb-4 space-y-2">
           {onSelectCity && (
             <div className="py-2 border-b border-[#1c2e23] mb-2">
-              <span className="text-xs text-slate-400 block mb-1.5">Change Active City:</span>
+              <span className="text-xs text-slate-400 block mb-1.5">{t('nav.location')}:</span>
               <LocationSearch
                 onSelectLocation={(loc) => {
                   onSelectCity(loc);

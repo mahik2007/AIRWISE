@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Award, TrendingUp, CheckCircle2, Trash2, Calendar, 
   Leaf, Zap, Plus, ArrowUpRight, ShieldCheck 
@@ -19,6 +20,7 @@ export const MyImpact: React.FC<MyImpactProps> = ({
   onDeleteActivity,
   onClearAll,
 }) => {
+  const { t } = useTranslation();
   const [customTitle, setCustomTitle] = useState('');
   const [customCategory, setCustomCategory] = useState<'commute' | 'indoor' | 'energy' | 'waste'>('commute');
   const [customDistance, setCustomDistance] = useState(10);
@@ -59,10 +61,10 @@ export const MyImpact: React.FC<MyImpactProps> = ({
       <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
         <div className="flex items-center space-x-2 mb-2">
           <Award className="w-5 h-5 text-emerald-400" />
-          <h2 className="text-xl font-bold text-slate-100">My Environmental Impact Tracker</h2>
+          <h2 className="text-xl font-bold text-slate-100">{t('impact.title')}</h2>
         </div>
         <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-          Log verified low-emission actions, measure individual exposure mitigation, and see your cumulative contribution to cleaner urban air. Persisted locally in your browser session.
+          {t('impact.subtitle')}
         </p>
       </div>
 
@@ -70,7 +72,7 @@ export const MyImpact: React.FC<MyImpactProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
           <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span>Cumulative CO₂ Avoided:</span>
+            <span>{t('impact.totalCo2')}</span>
             <Leaf className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="text-3xl font-extrabold text-emerald-400">
@@ -84,7 +86,7 @@ export const MyImpact: React.FC<MyImpactProps> = ({
 
         <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
           <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span>Tailpipe PM2.5 Prevented:</span>
+            <span>{t('impact.totalPm')}</span>
             <TrendingUp className="w-4 h-4 text-teal-400" />
           </div>
           <div className="text-3xl font-extrabold text-teal-400">
@@ -98,53 +100,53 @@ export const MyImpact: React.FC<MyImpactProps> = ({
 
         <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
           <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span>Completed Micro-Actions:</span>
+            <span>{t('impact.completedActions')}</span>
             <CheckCircle2 className="w-4 h-4 text-lime-400" />
           </div>
           <div className="text-3xl font-extrabold text-lime-400">
             {activities.length}{' '}
-            <span className="text-sm font-normal text-slate-400">actions</span>
+            <span className="text-sm font-normal text-slate-400">{t('impact.actionsCount')}</span>
           </div>
           <span className="text-[11px] text-slate-500 mt-2 block">
-            {activities.length > 5 ? 'Habit Streak: Level 2 Eco Pioneer' : 'Keep building your daily streak!'}
+            {activities.length > 5 ? t('impact.streakLvl2') : t('impact.streakKeep')}
           </span>
         </div>
       </div>
 
       {/* Quick Action Logger */}
       <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828] space-y-4">
-        <h3 className="text-sm font-bold text-slate-100">Log a Common Sustainable Habit</h3>
+        <h3 className="text-sm font-bold text-slate-100">{t('impact.logHabitTitle')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <button
             onClick={() => handleQuickAdd('Switched car to Metro commute (10 km)', 'commute', 1650, 0.29)}
             className="p-3 rounded-2xl bg-[#14261c] hover:bg-emerald-500/20 border border-[#213e2d] text-left transition-all group"
           >
-            <div className="text-xs font-bold text-slate-200 group-hover:text-emerald-300">Took Metro Rail (10 km)</div>
-            <div className="text-[11px] text-slate-400 mt-1">+1.65 kg CO₂ saved</div>
+            <div className="text-xs font-bold text-slate-200 group-hover:text-emerald-300">{t('impact.quick1Title')}</div>
+            <div className="text-[11px] text-slate-400 mt-1">{t('impact.quick1Sub')}</div>
           </button>
 
           <button
             onClick={() => handleQuickAdd('Carpool with 2 colleagues to office', 'commute', 1150, 0.18)}
             className="p-3 rounded-2xl bg-[#14261c] hover:bg-emerald-500/20 border border-[#213e2d] text-left transition-all group"
           >
-            <div className="text-xs font-bold text-slate-200 group-hover:text-emerald-300">Shared Carpool Ride</div>
-            <div className="text-[11px] text-slate-400 mt-1">+1.15 kg CO₂ saved</div>
+            <div className="text-xs font-bold text-slate-200 group-hover:text-emerald-300">{t('impact.quick2Title')}</div>
+            <div className="text-[11px] text-slate-400 mt-1">{t('impact.quick2Sub')}</div>
           </button>
 
           <button
             onClick={() => handleQuickAdd('Damp mopped room instead of dry sweeping', 'indoor', 50, 0.05)}
             className="p-3 rounded-2xl bg-[#14261c] hover:bg-emerald-500/20 border border-[#213e2d] text-left transition-all group"
           >
-            <div className="text-xs font-bold text-slate-200 group-hover:text-emerald-300">Wet Mop Dust Protocol</div>
-            <div className="text-[11px] text-slate-400 mt-1">Zero particulate resuspension</div>
+            <div className="text-xs font-bold text-slate-200 group-hover:text-emerald-300">{t('impact.quick3Title')}</div>
+            <div className="text-[11px] text-slate-400 mt-1">{t('impact.quick3Sub')}</div>
           </button>
 
           <button
             onClick={() => handleQuickAdd('Preheated chimney & covered pans during cooking', 'indoor', 80, 0.03)}
             className="p-3 rounded-2xl bg-[#14261c] hover:bg-emerald-500/20 border border-[#213e2d] text-left transition-all group"
           >
-            <div className="text-xs font-bold text-slate-200 group-hover:text-emerald-300">Clean Cooking Flow</div>
-            <div className="text-[11px] text-slate-400 mt-1">Reduced indoor VOC/PM</div>
+            <div className="text-xs font-bold text-slate-200 group-hover:text-emerald-300">{t('impact.quick4Title')}</div>
+            <div className="text-[11px] text-slate-400 mt-1">{t('impact.quick4Sub')}</div>
           </button>
         </div>
 
@@ -154,7 +156,7 @@ export const MyImpact: React.FC<MyImpactProps> = ({
             type="text"
             value={customTitle}
             onChange={(e) => setCustomTitle(e.target.value)}
-            placeholder="Add custom action (e.g. Worked from home, replaced filter, cycled)..."
+            placeholder={t('impact.customPlaceholder')}
             className="flex-1 bg-[#14261c] border border-[#213e2d] rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none"
           />
           <select
@@ -162,17 +164,17 @@ export const MyImpact: React.FC<MyImpactProps> = ({
             onChange={(e) => setCustomCategory(e.target.value as any)}
             className="bg-[#14261c] border border-[#213e2d] rounded-xl px-3 py-2 text-xs text-emerald-300 focus:outline-none"
           >
-            <option value="commute">Commute Switch</option>
-            <option value="indoor">Indoor Clean Air</option>
-            <option value="energy">Clean Energy</option>
-            <option value="waste">Waste Management</option>
+            <option value="commute">{t('impact.catCommute')}</option>
+            <option value="indoor">{t('impact.catIndoor')}</option>
+            <option value="energy">{t('impact.catEnergy')}</option>
+            <option value="waste">{t('impact.catWaste')}</option>
           </select>
           <button
             type="submit"
             className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center space-x-1"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Add Action</span>
+            <span>{t('impact.btnAddAction')}</span>
           </button>
         </form>
       </div>
@@ -180,21 +182,21 @@ export const MyImpact: React.FC<MyImpactProps> = ({
       {/* History Log */}
       <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
         <div className="flex items-center justify-between pb-3 border-b border-[#1b3425] mb-4">
-          <h3 className="text-sm font-bold text-slate-100">Activity History Log</h3>
+          <h3 className="text-sm font-bold text-slate-100">{t('impact.historyHeading')}</h3>
           {activities.length > 0 && (
             <button
               onClick={onClearAll}
               className="text-[11px] text-slate-500 hover:text-rose-400 flex items-center space-x-1"
             >
               <Trash2 className="w-3 h-3" />
-              <span>Reset History</span>
+              <span>{t('impact.resetHistory')}</span>
             </button>
           )}
         </div>
 
         {activities.length === 0 ? (
           <div className="py-8 text-center text-xs text-slate-500">
-            No activities logged yet. Check off items in the Daily Planner or click any quick habit above!
+            {t('impact.emptyState')}
           </div>
         ) : (
           <div className="space-y-2">

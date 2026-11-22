@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Home, Wind, Flame, Sparkles, CheckCircle2, AlertTriangle, 
   Layers, ShieldAlert, ThermometerSnowflake, Droplets, ArrowUpRight 
@@ -10,63 +11,64 @@ interface IndoorAirGuardianProps {
 }
 
 export const IndoorAirGuardian: React.FC<IndoorAirGuardianProps> = ({ airQualityData }) => {
+  const { t } = useTranslation();
   const [selectedRoom, setSelectedRoom] = useState<'living' | 'bedroom' | 'kitchen'>('living');
   const currentAqi = airQualityData?.current.usAqi ?? 130;
 
   const guidanceCards = [
     {
-      title: 'Optimal Ventilation Timing',
+      title: t('indoor.card1Title'),
       icon: Wind,
-      badge: currentAqi > 180 ? 'Seal Windows' : 'Check Hourly AQI',
+      badge: currentAqi > 180 ? t('indoor.card1BadgeSeal') : t('indoor.card1BadgeCheck'),
       badgeColor: currentAqi > 180 ? 'bg-red-500/20 text-red-300' : 'bg-emerald-500/20 text-emerald-300',
-      summary: 'Before opening windows, check current hourly outdoor AQI readings. Avoid ventilating during cold morning inversion hours when ground-level exhaust stagnates.',
+      summary: t('indoor.card1Summary'),
       details: [
-        'Ventilate only if verified hourly outdoor AQI confirms acceptable ambient conditions; never assume midday is automatically safe.',
-        'If outdoor readings are favorable, create brief cross-ventilation for 10-15 minutes, then latch windows securely.',
-        'Use draft-stopper seals or rolled towels beneath exterior doors facing corridors to limit particulate infiltration.',
+        t('indoor.card1Step1'),
+        t('indoor.card1Step2'),
+        t('indoor.card1Step3'),
       ],
-      scientificWhy: 'Thermal temperature inversion occurs when cold surface air is trapped beneath warmer air aloft, compressing particulate matter close to breathing height.',
+      scientificWhy: t('indoor.card1Why'),
     },
     {
-      title: 'Kitchen Cooking Smog Management',
+      title: t('indoor.card2Title'),
       icon: Flame,
-      badge: 'High PM2.5 Source',
+      badge: t('indoor.card2Badge'),
       badgeColor: 'bg-amber-500/20 text-amber-300',
-      summary: 'High-heat oil frying, deep tempering, and unvented gas stoves can cause indoor PM2.5 spikes up to 400 µg/m³ within 15 minutes.',
+      summary: t('indoor.card2Summary'),
       details: [
-        'Turn on kitchen chimney/exhaust fan at least 60 seconds BEFORE igniting stove burners.',
-        'Keep the kitchen door closed from living rooms and bedrooms while cooking.',
-        'Cover pans during boiling and shallow frying to prevent aerosolized lipid droplets from escaping into room air.',
-        'Never rely on chemical aerosol room fresheners or citrus sprays—they react with ozone to form formaldehyde and secondary particulates.',
+        t('indoor.card2Step1'),
+        t('indoor.card2Step2'),
+        t('indoor.card2Step3'),
+        t('indoor.card2Step4'),
       ],
-      scientificWhy: 'Incomplete LPG combustion emits nitrogen dioxide (NO2) and carbon monoxide, while vaporized cooking oils condense into ultrafine respirable aerosol particles.',
+      scientificWhy: t('indoor.card2Why'),
     },
     {
-      title: 'Safe Dust & Cleaning Practices',
+      title: t('indoor.card3Title'),
       icon: Layers,
-      badge: 'Zero-Resuspension Protocol',
+      badge: t('indoor.card3Badge'),
       badgeColor: 'bg-teal-500/20 text-teal-300',
-      summary: 'Traditional dry broom sweeping and feather dusters fling settled heavy and fine particulates back into breathing suspension.',
+      summary: t('indoor.card3Summary'),
       details: [
-        'Strictly switch to damp microfiber mopping and microfiber electrostatic cloths.',
-        'Vacuum exclusively with sealed HEPA-grade exhaust filters; ordinary bag vacuums blow fine particles right back into the room.',
-        'Wash bed linens and curtains in warm water (60°C) bi-weekly to neutralize dust-mite allergens and trapped exterior soot.',
+        t('indoor.card3Step1'),
+        t('indoor.card3Step2'),
+        t('indoor.card3Step3'),
       ],
-      scientificWhy: 'Mechanical dry sweeping resuspends PM10 and PM2.5 for up to 2 to 4 hours in stagnant indoor air.',
+      scientificWhy: t('indoor.card3Why'),
     },
     {
-      title: 'Air Purifier & Filtration Science',
+      title: t('indoor.card4Title'),
       icon: Sparkles,
-      badge: 'HEPA vs Plants Truth',
+      badge: t('indoor.card4Badge'),
       badgeColor: 'bg-purple-500/20 text-purple-300',
-      summary: 'Understand true particulate filtration capabilities versus common marketing myths.',
+      summary: t('indoor.card4Summary'),
       details: [
-        'True HEPA H13 filters capture 99.97% of particles down to 0.3 microns. Verify genuine H13 certification.',
-        'Place air purifiers centrally away from walls and at least 3 feet off the floor for optimal laminar airflow circulation.',
-        'Myth check: Indoor plants (snake plant, spider plant) have ZERO measurable effect on clearing high-concentration particulate smog (PM2.5). They absorb trace VOCs under high laboratory conditions but cannot replace mechanical filtration.',
-        'Clean or vacuum pre-filters every 2 weeks to extend true HEPA lifespan and reduce motor resistance.',
+        t('indoor.card4Step1'),
+        t('indoor.card4Step2'),
+        t('indoor.card4Step3'),
+        t('indoor.card4Step4'),
       ],
-      scientificWhy: 'Particulate capture requires high-volume volumetric air exchanges per hour (ACH 4–5x), which passive botanical surfaces physically cannot provide.',
+      scientificWhy: t('indoor.card4Why'),
     },
   ];
 
@@ -77,20 +79,20 @@ export const IndoorAirGuardian: React.FC<IndoorAirGuardianProps> = ({ airQuality
         <div>
           <div className="flex items-center space-x-2">
             <Home className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-xl font-bold text-slate-100">Indoor Air Guardian</h2>
+            <h2 className="text-xl font-bold text-slate-100">{t('indoor.title')}</h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Science-backed indoor air quality protocol for winter smog periods. (Note: Indoor air is unmonitored; metrics reflect outdoor ambient data).
+            {t('indoor.subtitle')}
           </p>
         </div>
 
         <div className="flex items-center space-x-3 text-xs">
           <div className="p-2.5 rounded-xl bg-[#14261c] border border-[#213d2c]">
-            <span className="text-slate-400 block text-[10px]">Ambient Outdoor AQI:</span>
+            <span className="text-slate-400 block text-[10px]">{t('indoor.outdoorAqi')}</span>
             <span className="font-bold text-emerald-300">{currentAqi} US AQI</span>
           </div>
           <div className="p-2.5 rounded-xl bg-[#14261c] border border-[#213d2c]">
-            <span className="text-slate-400 block text-[10px]">Target Indoor AQI:</span>
+            <span className="text-slate-400 block text-[10px]">{t('indoor.targetIndoor')}</span>
             <span className="font-bold text-emerald-400">&lt; 50 US AQI</span>
           </div>
         </div>
@@ -123,7 +125,7 @@ export const IndoorAirGuardian: React.FC<IndoorAirGuardianProps> = ({ airQuality
                 </p>
 
                 <div className="space-y-2 pt-2 border-t border-[#182f21]">
-                  <span className="text-xs font-semibold text-slate-200 block">Action Checklist:</span>
+                  <span className="text-xs font-semibold text-slate-200 block">{t('indoor.actionChecklist')}</span>
                   <ul className="space-y-1.5">
                     {card.details.map((detail, idx) => (
                       <li key={idx} className="flex items-start space-x-2 text-xs text-slate-300">
@@ -136,7 +138,7 @@ export const IndoorAirGuardian: React.FC<IndoorAirGuardianProps> = ({ airQuality
               </div>
 
               <div className="mt-5 p-3 rounded-xl bg-[#14261c] border border-[#203c2a] text-[11px] text-slate-400 leading-relaxed">
-                <strong className="text-emerald-300 block mb-0.5">Atmospheric Science Principle:</strong>
+                <strong className="text-emerald-300 block mb-0.5">{t('indoor.scientificPrinciple')}</strong>
                 {card.scientificWhy}
               </div>
             </div>
@@ -149,23 +151,23 @@ export const IndoorAirGuardian: React.FC<IndoorAirGuardianProps> = ({ airQuality
         <div className="max-w-2xl">
           <h3 className="text-base font-bold text-slate-100 mb-1 flex items-center space-x-2">
             <ThermometerSnowflake className="w-4 h-4 text-emerald-400" />
-            <span>Air Purifier Sizing Guide (CADR Rule)</span>
+            <span>{t('indoor.cadrGuideTitle')}</span>
           </h3>
           <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-            Never buy an air purifier based on room square footage claims alone. Match Clean Air Delivery Rate (CADR) to achieve 4 to 5 complete air changes per hour (ACH).
+            {t('indoor.cadrGuideDesc')}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3 rounded-xl bg-[#0b140f] border border-[#1e3828]">
-              <span className="text-slate-400 block text-[10px]">Small Bedroom (150 sq ft)</span>
+              <span className="text-slate-400 block text-[10px]">{t('indoor.cadrRoom1')}</span>
               <strong className="text-slate-100 text-sm">CADR: 120–150 m³/h</strong>
             </div>
             <div className="p-3 rounded-xl bg-[#0b140f] border border-[#1e3828]">
-              <span className="text-slate-400 block text-[10px]">Master Bedroom (250 sq ft)</span>
+              <span className="text-slate-400 block text-[10px]">{t('indoor.cadrRoom2')}</span>
               <strong className="text-slate-100 text-sm">CADR: 200–250 m³/h</strong>
             </div>
             <div className="p-3 rounded-xl bg-[#0b140f] border border-[#1e3828]">
-              <span className="text-slate-400 block text-[10px]">Living Hall (400+ sq ft)</span>
+              <span className="text-slate-400 block text-[10px]">{t('indoor.cadrRoom3')}</span>
               <strong className="text-slate-100 text-sm">CADR: 350–450 m³/h</strong>
             </div>
           </div>
