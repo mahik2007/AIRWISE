@@ -45,9 +45,10 @@ const ChatInputSchema = z.object({
     commutePreference: z.string().optional(),
     indoorPurifierAvailable: z.boolean().optional(),
   }).optional(),
+  locale: z.enum(['en', 'hi']).optional(),
 });
 
-const SYSTEM_PROMPT = `You are AIRWISE, an expert Urban Air Quality and Sustainable Living AI Assistant developed for Hack2Skill PromptWars Challenge 6.
+const SYSTEM_PROMPT = `You are AIRWISE, an expert Urban Air Quality and Sustainable Living AI Assistant.
 Your mission is to help families, professionals, students, and caregivers navigate severe winter smog and urban air pollution with actionable routines, indoor safety hacks, and low-emission choices.
 
 CRITICAL OPERATIONAL RULES:
@@ -345,6 +346,10 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
 - Vulnerable dependents (infants/seniors/asthma): ${parsedBody.lifestyle.hasVulnerableFamilyMembers ? 'Yes' : 'No'}
 - Air Purifier Available: ${parsedBody.lifestyle.indoorPurifierAvailable ? 'Yes' : 'No'}
 - Commute: ${parsedBody.lifestyle.commutePreference || 'standard'}\n`;
+    }
+
+    if (parsedBody.locale === 'hi') {
+      contextDescription += `\nLANGUAGE REQUIREMENT: Respond in natural, fluent, easily understandable Hindi (हिन्दी). Preserve technical terms and acronyms (US AQI, PM2.5, PM10, NO2, N95, HEPA, CADR) and explain them clearly in Hindi.\n`;
     }
 
     const response = await ai.models.generateContent({

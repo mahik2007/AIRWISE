@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   ArrowLeftRight, Car, Bus, Train, Bike, Footprints, 
   Leaf, Info, ShieldCheck, Zap, PlusCircle 
@@ -11,6 +12,7 @@ interface GreenChoiceEngineProps {
 }
 
 export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpact }) => {
+  const { t } = useTranslation();
   const [distanceKm, setDistanceKm] = useState<number>(12);
   const [baseMode, setBaseMode] = useState<string>('car_solo');
   const [altMode, setAltMode] = useState<string>('metro');
@@ -19,13 +21,13 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
   const [savedNotice, setSavedNotice] = useState(false);
 
   const transportModes = [
-    { id: 'car_solo', name: 'Solo Private Car', icon: Car, factor: '180 g CO2/km' },
-    { id: 'two_wheeler', name: 'Motorbike / Scooter', icon: Bike, factor: '75 g CO2/km' },
-    { id: 'carpool', name: 'Carpool (3 People)', icon: Car, factor: '65 g CO2/km' },
-    { id: 'bus', name: 'City Bus Transit', icon: Bus, factor: '35 g CO2/km' },
-    { id: 'metro', name: 'Electric Metro Rail', icon: Train, factor: '15 g CO2/km' },
-    { id: 'cycle_walk', name: 'Bicycle / Walking', icon: Footprints, factor: '0 g CO2/km' },
-    { id: 'wfh', name: 'Remote / Work from Home', icon: Zap, factor: '0 g CO2/km' },
+    { id: 'car_solo', name: t('greenchoice.modeSoloCar'), icon: Car, factor: '180 g CO2/km' },
+    { id: 'two_wheeler', name: t('greenchoice.modeTwoWheeler'), icon: Bike, factor: '75 g CO2/km' },
+    { id: 'carpool', name: t('greenchoice.modeCarpool'), icon: Car, factor: '65 g CO2/km' },
+    { id: 'bus', name: t('greenchoice.modeBus'), icon: Bus, factor: '35 g CO2/km' },
+    { id: 'metro', name: t('greenchoice.modeMetro'), icon: Train, factor: '15 g CO2/km' },
+    { id: 'cycle_walk', name: t('greenchoice.modeCycleWalk'), icon: Footprints, factor: '0 g CO2/km' },
+    { id: 'wfh', name: t('greenchoice.modeWfh'), icon: Zap, factor: '0 g CO2/km' },
   ];
 
   const handleCalculate = async () => {
@@ -59,10 +61,10 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
       <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
         <div className="flex items-center space-x-2 mb-2">
           <ArrowLeftRight className="w-5 h-5 text-emerald-400" />
-          <h2 className="text-xl font-bold text-slate-100">Green Choice Engine</h2>
+          <h2 className="text-xl font-bold text-slate-100">{t('greenchoice.title')}</h2>
         </div>
         <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-          Compare commute and daily lifestyle options using standardized ARAI & UK DEFRA transport emission metrics. Understand real trade-offs and calculate direct tailpipe emissions avoided.
+          {t('greenchoice.subtitle')}
         </p>
       </div>
 
@@ -70,10 +72,10 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Controls Card */}
         <div className="lg:col-span-1 p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828] space-y-5">
-          <h3 className="text-sm font-bold text-slate-100">Configure Trip Comparison</h3>
+          <h3 className="text-sm font-bold text-slate-100">{t('greenchoice.configHeading')}</h3>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1.5">Baseline (Current Mode):</label>
+            <label className="text-xs text-slate-400 block mb-1.5">{t('greenchoice.labelBase')}</label>
             <select
               value={baseMode}
               onChange={(e) => setBaseMode(e.target.value)}
@@ -88,7 +90,7 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 block mb-1.5">Sustainable Alternative:</label>
+            <label className="text-xs text-slate-400 block mb-1.5">{t('greenchoice.labelAlt')}</label>
             <select
               value={altMode}
               onChange={(e) => setAltMode(e.target.value)}
@@ -104,7 +106,7 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
 
           <div>
             <div className="flex justify-between items-center text-xs text-slate-400 mb-1.5">
-              <span>One-way Trip Distance:</span>
+              <span>{t('greenchoice.labelDistance')}</span>
               <strong className="text-emerald-300 font-mono">{distanceKm} km</strong>
             </div>
             <input
@@ -127,7 +129,7 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
             disabled={loading}
             className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-md"
           >
-            {loading ? 'Evaluating...' : 'Compute Tailpipe Savings'}
+            {loading ? t('greenchoice.calculatingBtn') : t('greenchoice.computeBtn')}
           </button>
         </div>
 
@@ -136,7 +138,7 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-[#1b3425]">
               <div className="text-xs text-slate-400">
-                Evaluating: <strong className="text-slate-200">{distanceKm} km journey</strong>
+                {t('greenchoice.evaluating')} <strong className="text-slate-200">{distanceKm} km {t('greenchoice.journey')}</strong>
               </div>
               <span className="text-[10px] text-emerald-400/80 font-mono">ARAI/CPCB Methodology</span>
             </div>
@@ -145,7 +147,7 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
               <div className="py-5 space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-2xl bg-[#14261c] border border-[#203d2b]">
-                    <span className="text-[11px] text-slate-400 block mb-1">CO₂ Tailpipe Avoidance:</span>
+                    <span className="text-[11px] text-slate-400 block mb-1">{t('greenchoice.carbonAvoided')}:</span>
                     <div className="text-2xl sm:text-3xl font-extrabold text-emerald-400">
                       {(comparison.co2SavedGrams / 1000).toFixed(2)}{' '}
                       <span className="text-xs font-normal text-slate-400">kg CO₂</span>
@@ -156,7 +158,7 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
                   </div>
 
                   <div className="p-4 rounded-2xl bg-[#14261c] border border-[#203d2b]">
-                    <span className="text-[11px] text-slate-400 block mb-1">Particulate PM2.5 Prevented:</span>
+                    <span className="text-[11px] text-slate-400 block mb-1">{t('greenchoice.pmAvoided')}:</span>
                     <div className="text-2xl sm:text-3xl font-extrabold text-teal-400">
                       {comparison.pm25SavedGrams}{' '}
                       <span className="text-xs font-normal text-slate-400">grams PM2.5</span>
@@ -176,20 +178,20 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
               </div>
             ) : (
               <div className="py-12 text-center text-xs text-slate-500">
-                Click &ldquo;Compute Tailpipe Savings&rdquo; to evaluate the emissions difference for your commute.
+                {t('greenchoice.clickToEval')}
               </div>
             )}
           </div>
 
           {comparison && (
             <div className="pt-4 border-t border-[#1b3425] flex items-center justify-between">
-              <span className="text-xs text-slate-400">Make this action count towards your footprint:</span>
+              <span className="text-xs text-slate-400">{t('greenchoice.countTowardFootprint')}</span>
               <button
                 onClick={handleRecordToTracker}
                 className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
-                <span>{savedNotice ? 'Logged to My Impact!' : 'Log to Impact Tracker'}</span>
+                <span>{savedNotice ? t('greenchoice.savedNotice') : t('greenchoice.logToTracker')}</span>
               </button>
             </div>
           )}
@@ -198,7 +200,7 @@ export const GreenChoiceEngine: React.FC<GreenChoiceEngineProps> = ({ onLogImpac
 
       {/* Trade-Off Comparison Matrix */}
       <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
-        <h3 className="text-sm font-bold text-slate-100 mb-3">Urban Mobility Trade-Off Matrix</h3>
+        <h3 className="text-sm font-bold text-slate-100 mb-3">{t('greenchoice.matrixHeading')}</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="text-[11px] uppercase tracking-wider text-slate-400 border-b border-[#1c3626]">

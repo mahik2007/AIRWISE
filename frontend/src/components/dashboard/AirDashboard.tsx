@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Wind, Clock, ShieldCheck, 
   TrendingUp, Calendar, ChevronRight, Info, AlertTriangle
@@ -16,6 +17,7 @@ interface AirDashboardProps {
 }
 
 export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onAskAI }) => {
+  const { t } = useTranslation();
   const current = data.current;
   const aqiStyle = getAqiColor(current.usAqi);
   const eurAqiBadge = current.europeanAqi !== undefined ? getEuropeanAqiBadge(current.europeanAqi) : null;
@@ -61,11 +63,11 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             <p className="text-xs text-slate-400 flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
               <span className="flex items-center space-x-1">
                 <Clock className="w-3.5 h-3.5 text-slate-500" />
-                <span>Last Updated: {formatDate(current.timestamp)} at {formatTime(current.timestamp)}</span>
+                <span>{t('dashboard.lastUpdated')}: {formatDate(current.timestamp)} {t('dashboard.at')} {formatTime(current.timestamp)}</span>
               </span>
               <span>•</span>
               <span className="text-emerald-400/90 font-medium">
-                {current.isObservedStation ? `Observed Station: ${current.stationName}` : 'Atmospheric Dispersion Model (CAMS)'}
+                {current.isObservedStation ? `${t('dashboard.observedStation')}: ${current.stationName}` : t('dashboard.modelCams')}
               </span>
             </p>
           </div>
@@ -74,14 +76,14 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
         {/* Data Provenance & Refresh */}
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="px-3 py-1.5 rounded-xl bg-[#14261c] border border-[#213e2d] text-xs">
-            <span className="text-slate-400 mr-1.5">Telemetry Provider:</span>
+            <span className="text-slate-400 mr-1.5">{t('dashboard.telemetryProvider')}:</span>
             <span className="text-emerald-300 font-semibold">{current.dataSource}</span>
           </div>
           <button
             onClick={onRefresh}
             className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all hover:scale-[1.02]"
           >
-            Refresh Readings
+            {t('dashboard.refreshBtn')}
           </button>
         </div>
       </div>
@@ -93,7 +95,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-mono font-bold tracking-widest text-emerald-300 uppercase bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                US AQI Scale (EPA Standard)
+                {t('dashboard.scaleUsaqi')}
               </span>
               <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${aqiStyle.badge}`}>
                 {current.usAqiCategory}
@@ -159,7 +161,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
           <div>
             <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-400 mb-3">
               <ShieldCheck className="w-4 h-4" />
-              <span>Immediate Daily Advisory</span>
+              <span>{t('dashboard.primaryHealthAdvisory')}</span>
             </div>
             <h3 className="text-base font-bold text-slate-100 mb-2">
               {current.usAqi > 200
@@ -170,10 +172,10 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
               {current.usAqi > 150
-                ? 'High particulate matter suspension. Avoid early morning jogging or vigorous outdoor workouts. Check current hourly AQI before airing rooms; keep windows sealed during peak smog intervals. Note: indoor air quality is unmonitored.'
+                ? t('dashboard.advisoryHigh')
                 : current.usAqi > 80
-                ? 'Particulate density is moderate. Keep indoor spaces clean with damp mopping and opt for public transit or carpooling.'
-                : 'Atmospheric dispersion is healthy. Favorable ambient conditions for outdoor physical exercise and natural ventilation.'}
+                ? t('dashboard.advisoryModerate')
+                : t('dashboard.advisoryLow')}
             </p>
           </div>
 
@@ -182,14 +184,14 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
               onClick={() => onAskAI(`Should I wear a mask outdoors today in ${data.location.name}?`)}
               className="w-full text-left px-3 py-2 rounded-xl bg-[#15271d] hover:bg-[#1a3225] border border-[#213f2d] text-xs text-slate-300 flex items-center justify-between transition-colors"
             >
-              <span>Do I need an N95 mask today?</span>
+              <span>{t('dashboard.askMask')}</span>
               <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />
             </button>
             <button
               onClick={() => onAskAI(`When is the best time to ventilate my home today in ${data.location.name}?`)}
               className="w-full text-left px-3 py-2 rounded-xl bg-[#15271d] hover:bg-[#1a3225] border border-[#213f2d] text-xs text-slate-300 flex items-center justify-between transition-colors"
             >
-              <span>When should I open my windows?</span>
+              <span>{t('dashboard.askVentilate')}</span>
               <ChevronRight className="w-3.5 h-3.5 text-emerald-400" />
             </button>
           </div>

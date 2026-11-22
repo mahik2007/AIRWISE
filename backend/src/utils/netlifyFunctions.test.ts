@@ -695,10 +695,13 @@ describe('Netlify Functions Verification', () => {
       expect(src, `${name}: solar warming dilutes`).not.toContain('solar warming dilutes');
     }
 
-    // LandingPage-specific: must contain the corrected guidance
-    expect(landingPage).toContain('Check current hourly air-quality readings before planning outdoor errands');
-    // AirDashboard-specific: must reference hourly AQI check for high pollution window
-    expect(airDashboard).toContain('Check current hourly AQI before airing rooms');
+    // LandingPage / en.json specific: must contain the corrected guidance
+    const enLocale = readFileSync(resolve(root, 'frontend/src/i18n/locales/en.json'), 'utf-8');
+    const combinedLandingText = landingPage + enLocale;
+    expect(combinedLandingText).toContain('Check current hourly air-quality readings before planning outdoor errands');
+    // AirDashboard / en.json specific: must reference hourly AQI check for high pollution window
+    const combinedDashboardText = airDashboard + enLocale;
+    expect(combinedDashboardText).toContain('Check current hourly AQI before airing rooms');
   });
 
   it('calculator-transport function calculates correct ARAI/DEFRA savings', async () => {

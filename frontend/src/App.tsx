@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
 import { LandingPage } from './pages/LandingPage';
@@ -22,6 +23,7 @@ const DEFAULT_CITY: GeocodingResult = {
 };
 
 export const App: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string>('landing');
   const [currentCity, setCurrentCity] = useState<GeocodingResult>(DEFAULT_CITY);
   const [airQualityData, setAirQualityData] = useState<AirQualityPayload | null>(null);
@@ -55,7 +57,7 @@ export const App: React.FC = () => {
       setAirQualityData(data);
     } catch (err: any) {
       console.error(err);
-      setError(`Unable to retrieve real-time air quality data for ${loc.name}. Please check your connection or retry.`);
+      setError(`${t('common.unableRetrieve')} ${loc.name}. ${t('common.checkConnection')}`);
     } finally {
       setLoading(false);
     }
@@ -123,7 +125,7 @@ export const App: React.FC = () => {
                 onClick={() => loadAirData(currentCity)}
                 className="px-3 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-200 text-xs font-semibold transition-colors"
               >
-                Retry
+                {t('common.retry')}
               </button>
             </div>
           </div>
@@ -143,9 +145,9 @@ export const App: React.FC = () => {
               <div className="py-24 flex flex-col items-center justify-center space-y-3">
                 <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
                 <p className="text-xs text-slate-400 font-medium">
-                  Connecting to atmospheric sensors for <span className="text-emerald-300">{currentCity.name}</span>...
+                  {t('common.connecting')} <span className="text-emerald-300">{currentCity.name}</span>...
                 </p>
-                <p className="text-[11px] text-slate-500">Querying Open-Meteo & Copernicus CAMS models</p>
+                <p className="text-[11px] text-slate-500">{t('common.queryingModels')}</p>
               </div>
             ) : airQualityData ? (
               <AirDashboard

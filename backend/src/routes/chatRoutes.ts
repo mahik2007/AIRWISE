@@ -29,6 +29,7 @@ const ChatInputSchema = z.object({
     commutePreference: z.string().optional(),
     indoorPurifierAvailable: z.boolean().optional(),
   }).optional(),
+  locale: z.enum(['en', 'hi']).optional(),
 });
 
 // POST /api/chat
@@ -40,13 +41,14 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const { message, location, airQuality, lifestyle } = parsed.data;
+    const { message, location, airQuality, lifestyle, locale } = parsed.data;
 
     const response = await generateChatRecommendation({
       userMessage: message,
       location,
       airQuality,
       lifestyle,
+      locale,
     });
 
     res.json(response);

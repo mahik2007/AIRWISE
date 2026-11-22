@@ -52,6 +52,7 @@ export async function sendChatMessage(payload: {
     commutePreference?: string;
     indoorPurifierAvailable?: boolean;
   };
+  locale?: 'en' | 'hi';
 }): Promise<ChatRecommendationResponse> {
   const res = await fetch(`${BASE_URL}/chat`, {
     method: 'POST',

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Calendar, Sun, Briefcase, Sunset, Moon, ShieldAlert, 
   CheckCircle, ArrowRight, Clock, UserCheck, AlertTriangle 
@@ -13,13 +14,14 @@ interface DailyPlannerProps {
 type PersonaType = 'student' | 'working_professional' | 'homemaker' | 'caregiver';
 
 export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLogImpact }) => {
+  const { t, i18n } = useTranslation();
   const [selectedPersona, setSelectedPersona] = useState<PersonaType>('working_professional');
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
 
   const currentAqi = airQualityData?.current?.usAqi;
   const isAqiAvailable = typeof currentAqi === 'number' && !isNaN(currentAqi);
   const isHighPollution = isAqiAvailable && currentAqi > 150;
-  const cityName = airQualityData?.location?.name || 'your city';
+  const cityName = airQualityData?.location?.name || (i18n.language === 'hi' ? 'आपका शहर' : 'your city');
 
   const toggleStep = (stepId: string, title: string, co2 = 120, pm = 0.02) => {
     const isNowDone = !completedSteps[stepId];
@@ -30,10 +32,10 @@ export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLo
   };
 
   const personas = [
-    { id: 'student', title: 'Student', desc: 'School & college schedules, library commutes, study air quality.' },
-    { id: 'working_professional', title: 'Working Professional', desc: 'Daily office commute, desk ergonomics, transit alternatives.' },
-    { id: 'homemaker', title: 'Homemaker', desc: 'Ventilation windows, cooking emissions, indoor dust control.' },
-    { id: 'caregiver', title: 'Senior & Child Caregiver', desc: 'Vulnerable group protection, respiratory alert management.' },
+    { id: 'student', title: t('planner.student'), desc: t('planner.studentDesc') },
+    { id: 'working_professional', title: t('planner.working_professional'), desc: t('planner.working_professionalDesc') },
+    { id: 'homemaker', title: t('planner.homemaker'), desc: t('planner.homemakerDesc') },
+    { id: 'caregiver', title: t('planner.caregiver'), desc: t('planner.caregiverDesc') },
   ];
 
   // Persona routines grounded in pollution condition
@@ -220,18 +222,18 @@ export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLo
         <div>
           <div className="flex items-center space-x-2">
             <Calendar className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-xl font-bold text-slate-100">Smart Daily Routine Planner</h2>
+            <h2 className="text-xl font-bold text-slate-100">{t('planner.title')}</h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
             {isAqiAvailable ? (
               <>
-                Dynamically customized schedule for <strong className="text-emerald-300">{cityName}</strong>{' '}
+                {t('planner.dynamicSchedule')} <strong className="text-emerald-300">{cityName}</strong>{' '}
                 (Current US AQI: <span className="font-bold text-slate-200">{currentAqi}</span>)
               </>
             ) : (
               <>
-                Baseline schedule for <strong className="text-emerald-300">{cityName}</strong>{' '}
-                <span className="text-amber-400/90 font-medium">(Live AQI telemetry unavailable)</span>
+                {t('planner.baselineSchedule')} <strong className="text-emerald-300">{cityName}</strong>{' '}
+                <span className="text-amber-400/90 font-medium">({t('planner.liveUnavailable')})</span>
               </>
             )}
           </p>
@@ -240,14 +242,14 @@ export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLo
         {isHighPollution && (
           <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <span>High Smog Protocol Active: Outdoor workouts restricted</span>
+            <span>{t('planner.highSmogActive')}</span>
           </div>
         )}
 
         {!isAqiAvailable && (
           <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-slate-800/60 border border-slate-700/50 text-slate-300 text-xs font-medium">
             <ShieldAlert className="w-4 h-4 flex-shrink-0 text-amber-400" />
-            <span>Showing standard precautions — live air quality data unavailable</span>
+            <span>{t('planner.liveUnavailable')}</span>
           </div>
         )}
       </div>
@@ -308,7 +310,7 @@ export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLo
                   }`}
                 >
                   <CheckCircle className="w-3.5 h-3.5" />
-                  <span>{isDone ? 'Completed & Logged' : 'Mark as Done'}</span>
+                  <span>{isDone ? t('planner.completedLogged') : t('planner.markDone')}</span>
                 </button>
               </div>
 
@@ -317,14 +319,14 @@ export const DailyPlanner: React.FC<DailyPlannerProps> = ({ airQualityData, onLo
                   {item.recommendation}
                 </p>
                 <div className="text-[11px] text-slate-400 flex items-start space-x-1.5">
-                  <strong className="text-emerald-400">Action:</strong>
+                  <strong className="text-emerald-400">{t('planner.action')}</strong>
                   <span>{item.practicalStep}</span>
                 </div>
               </div>
 
               <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400 px-1">
-                <span>Avoids exposure and estimated ~{item.savings.co2}g CO₂ equivalent</span>
-                <span className="text-emerald-400 font-mono">~{item.savings.pm}g PM avoided</span>
+                <span>{t('planner.avoidsExposure')} ~{item.savings.co2}g CO₂</span>
+                <span className="text-emerald-400 font-mono">~{item.savings.pm}g PM {t('planner.avoided')}</span>
               </div>
             </div>
           );
