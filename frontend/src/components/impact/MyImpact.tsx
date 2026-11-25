@@ -161,7 +161,7 @@ export const MyImpact: React.FC<MyImpactProps> = ({
           />
           <select
             value={customCategory}
-            onChange={(e) => setCustomCategory(e.target.value as any)}
+            onChange={(e) => setCustomCategory(e.target.value as 'commute' | 'indoor' | 'energy' | 'waste')}
             className="bg-[#14261c] border border-[#213e2d] rounded-xl px-3 py-2 text-xs text-emerald-300 focus:outline-none"
           >
             <option value="commute">{t('impact.catCommute')}</option>

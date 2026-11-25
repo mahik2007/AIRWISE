@@ -5,6 +5,42 @@ import { calculateTripSavings } from '../utils/emissionModels.js';
 
 const router = Router();
 
+// In-memory sliding window rate limiter for expensive AI endpoint
+interface RateLimitRecord {
+  count: number;
+  resetAt: number;
+}
+const rateLimitMap = new Map<string, RateLimitRecord>();
+const CHAT_RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const CHAT_RATE_LIMIT_MAX_REQUESTS = 30; // 30 requests per minute per IP
+
+function isRateLimited(ip: string): boolean {
+  if (process.env.NODE_ENV === 'test') {
+    return false;
+  }
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + CHAT_RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  if (record.count >= CHAT_RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+  record.count += 1;
+  return false;
+}
+
+// Clean up expired entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitMap.entries()) {
+    if (now > record.resetAt) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000).unref?.();
+
 const ChatInputSchema = z.object({
   message: z.string().min(1, 'Message cannot be empty').max(1000, 'Message is too long'),
   location: z.object({
@@ -35,6 +71,17 @@ const ChatInputSchema = z.object({
 // POST /api/chat
 router.post('/chat', async (req: Request, res: Response): Promise<void> => {
   try {
+    // Prioritize Netlify/Cloudflare edge IP, then first untrusted client IP in x-forwarded-for, then socket remote address
+    const clientIp = (req.headers['x-nf-client-connection-ip'] as string)
+      || (req.headers['cf-connecting-ip'] as string)
+      || (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim()
+      || req.socket.remoteAddress
+      || '127.0.0.1';
+    if (isRateLimited(clientIp)) {
+      res.status(429).json({ error: 'Too many requests. Please wait a moment before sending another message.' });
+      return;
+    }
+
     const parsed = ChatInputSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: parsed.error.issues[0].message });
@@ -52,8 +99,9 @@ router.post('/chat', async (req: Request, res: Response): Promise<void> => {
     });
 
     res.json(response);
-  } catch (error: any) {
-    console.error('Chat endpoint error:', error);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Chat endpoint error:', errorMsg);
     res.status(500).json({ error: 'Internal AI assistant processing error. Please try again.' });
   }
 });
@@ -69,7 +117,9 @@ router.post('/calculator/transport', (req: Request, res: Response): void => {
 
     const comparison = calculateTripSavings(baselineMode, alternativeMode, distanceKm);
     res.json(comparison);
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('Transport route calculation error:', errorMsg);
     res.status(500).json({ error: 'Failed to compute transport emission comparison' });
   }
 });

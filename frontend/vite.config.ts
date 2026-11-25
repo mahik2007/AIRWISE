@@ -13,4 +13,33 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          const normalized = id.replace(/\\/g, '/');
+          if (
+            normalized.includes('/node_modules/react/') ||
+            normalized.includes('/node_modules/react-dom/') ||
+            normalized.includes('/node_modules/react-is/') ||
+            normalized.includes('/node_modules/scheduler/')
+          ) {
+            return 'vendor-react';
+          }
+          if (normalized.includes('/node_modules/recharts/')) {
+            return 'vendor-charts';
+          }
+          if (normalized.includes('/node_modules/lucide-react/')) {
+            return 'vendor-icons';
+          }
+          if (
+            normalized.includes('/node_modules/i18next/') ||
+            normalized.includes('/node_modules/react-i18next/')
+          ) {
+            return 'vendor-i18n';
+          }
+        },
+      },
+    },
+  },
 });

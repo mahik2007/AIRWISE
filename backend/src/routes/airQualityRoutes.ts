@@ -31,8 +31,9 @@ router.get('/geocode', async (req: Request, res: Response): Promise<void> => {
 
     const results = await searchCities(parsed.data.q, parsed.data.count);
     res.json({ results });
-  } catch (error: any) {
-    console.error('Geocode route error:', error);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Geocode route error:', errorMsg);
     res.status(500).json({ error: 'Failed to search locations. Please try again.' });
   }
 });
@@ -49,8 +50,9 @@ router.get('/air-quality', async (req: Request, res: Response): Promise<void> =>
     const { lat, lon, name, country, admin1 } = parsed.data;
     const airQualityData = await fetchAirQuality(lat, lon, name, country, admin1);
     res.json(airQualityData);
-  } catch (error: any) {
-    console.error('Air quality route error:', error);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Air quality route error:', errorMsg);
     res.status(500).json({ error: 'Failed to retrieve air quality data. Please check coordinates and retry.' });
   }
 });

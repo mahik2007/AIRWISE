@@ -137,9 +137,10 @@ export async function generateChatRecommendation(context: ChatContextInput): Pro
       expectedBenefit: parsed.expectedBenefit || 'Reduces particulate inhalation load and mitigates smog exposure.',
       relevantLimitations: parsed.relevantLimitations || 'General air quality guidance; individual health risks should be evaluated with a doctor.',
     };
-  } catch (error: any) {
-    const errorType = error?.name || 'Error';
-    const status = error?.status || error?.statusCode || 'UNKNOWN';
+  } catch (error: unknown) {
+    const err = error as { name?: string; status?: number | string; statusCode?: number | string };
+    const errorType = err?.name || 'Error';
+    const status = err?.status || err?.statusCode || 'UNKNOWN';
     console.warn(`[AI Assistant Fallback] Live inference unavailable (Category: ${errorType}, Code: ${status}). Seamlessly serving grounded deterministic advisory.`);
     return generateRuleBasedFallback(context);
   }
@@ -151,14 +152,14 @@ export async function generateChatRecommendation(context: ChatContextInput): Pro
  */
 function generateRuleBasedFallback(context: ChatContextInput): ChatRecommendationResponse {
   const hasAqi = typeof context.airQuality?.usAqi === 'number' && !isNaN(context.airQuality.usAqi);
-  const aqi = hasAqi ? context.airQuality.usAqi : undefined;
+  const aqi = hasAqi ? context.airQuality?.usAqi : undefined;
   const location = context.location?.name || 'your area';
   const query = (context.userMessage || '').toLowerCase();
 
   const aqiStr = aqi !== undefined ? `(US AQI: ${aqi})` : '(Live telemetry unavailable)';
   const isSevere = aqi !== undefined && aqi > 200;
   const isModerateOrElevated = aqi !== undefined && aqi > 100;
-  const locale = context.locale === 'hi' ? 'hi' : 'en';
+  const locale: 'en' | 'hi' = context.locale === 'hi' ? 'hi' : 'en';
 
   const ctx = {
     location,

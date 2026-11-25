@@ -30,14 +30,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   return (
     <div className="min-h-screen bg-[#09120d] text-slate-100 flex flex-col selection:bg-emerald-500/30">
-      {/* Background Subtle Atmospheric Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[550px] bg-gradient-to-b from-emerald-900/20 via-teal-950/10 to-transparent pointer-events-none blur-3xl -z-10" />
+      {/* Background Subtle Atmospheric Vignette */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[450px] bg-gradient-to-b from-[#122319]/40 to-transparent pointer-events-none -z-10" />
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center flex flex-col items-center">
-        {/* Challenge & Tech Pill */}
-        <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#122419] border border-[#23422e] text-xs text-emerald-300 mb-8 shadow-sm">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+      <section className="pt-16 pb-12 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center flex flex-col items-center">
+        {/* Status & Tech Pill */}
+        <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-[#122419] border border-[#23422e] text-xs text-emerald-300 mb-6 shadow-sm">
+          <Sparkles className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
           <span className="font-medium">{t('landing.badge')}</span>
           <span className="text-slate-500">•</span>
           <span className="text-slate-400">{t('landing.tech')}</span>
@@ -46,12 +46,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         {/* Main Headline */}
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.15] text-slate-100 mb-6 max-w-4xl">
           {t('landing.heroTitle1')} <br />
-          <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-emerald-200 bg-clip-text text-transparent">
+          <span className="text-emerald-400">
             {t('landing.heroTitle2')}
           </span>
         </h1>
 
-        <p className="text-base sm:text-lg text-slate-300 mb-10 max-w-2xl leading-relaxed">
+        <p className="text-base sm:text-lg text-slate-300 mb-8 max-w-2xl leading-relaxed">
           {t('landing.heroDesc')}
         </p>
 
@@ -63,8 +63,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {popularCities.slice(0, 4).map((city) => (
               <button
                 key={city.name}
+                type="button"
                 onClick={() => { onSelectCity(city); onExploreDashboard(); }}
-                className="px-2.5 py-0.5 rounded-md bg-[#132219] hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 border border-[#213a2b] transition-all text-[11px]"
+                className="px-2.5 py-0.5 rounded-md bg-[#132219] hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-300 border border-[#213a2b] transition-all text-[11px] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 {city.name}
               </button>
@@ -75,18 +76,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         {/* CTA Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-4 mt-2">
           <button
+            type="button"
             onClick={onExploreDashboard}
-            className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-950/60 transition-all hover:scale-[1.02]"
+            className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-md transition-all hover:scale-[1.01] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
-            <Activity className="w-4 h-4" />
+            <Activity className="w-4 h-4" aria-hidden="true" />
             <span>{t('landing.btnDashboard')}</span>
-            <ArrowRight className="w-4 h-4 ml-1" />
+            <ArrowRight className="w-4 h-4 ml-1" aria-hidden="true" />
           </button>
           <button
+            type="button"
             onClick={onOpenAssistant}
-            className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-[#122319] hover:bg-[#183022] text-emerald-300 font-semibold text-sm border border-[#23422e] transition-all"
+            className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-[#122319] hover:bg-[#183022] text-emerald-300 font-semibold text-sm border border-[#23422e] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
-            <Sparkles className="w-4 h-4" />
+            <Sparkles className="w-4 h-4" aria-hidden="true" />
             <span>{t('landing.btnAssistant')}</span>
           </button>
         </div>
@@ -193,7 +196,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="rounded-2xl bg-[#0f1b14] border border-[#213a2a] p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#1b2f22]">
               <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-emerald-400" aria-hidden="true" />
                 <span className="text-xs font-semibold text-emerald-400">{t('landing.sampleAdvisoryBadge')}</span>
               </div>
               <span className="text-[10px] text-slate-400 font-mono">Model: Gemini 2.5 Flash</span>

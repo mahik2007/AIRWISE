@@ -75,13 +75,17 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
 
         {/* Data Provenance & Refresh */}
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="px-3 py-1.5 rounded-xl bg-[#14261c] border border-[#213e2d] text-xs">
-            <span className="text-slate-400 mr-1.5">{t('dashboard.telemetryProvider')}:</span>
-            <span className="text-emerald-300 font-semibold">{current.dataSource}</span>
+          <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-[#14261c] border border-[#213e2d] text-xs">
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              {current.isObservedStation ? 'STATION OBSERVATION' : 'ATMOSPHERIC MODEL'}
+            </span>
+            <span className="text-slate-400">{current.dataSource}</span>
           </div>
           <button
+            type="button"
             onClick={onRefresh}
-            className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all hover:scale-[1.02]"
+            aria-label={t('dashboard.refreshBtn', 'Refresh telemetry data')}
+            className="px-3.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
             {t('dashboard.refreshBtn')}
           </button>
@@ -91,7 +95,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
       {/* Main AQI Indicator Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Core AQI Gauge Card: US AQI Scale Clearly Identified */}
-        <div className={`p-6 rounded-3xl border ${aqiStyle.border} ${aqiStyle.bg} flex flex-col justify-between relative overflow-hidden backdrop-blur-md`}>
+        <section aria-label="Current Air Quality Index Overview" className={`p-6 rounded-3xl border ${aqiStyle.border} ${aqiStyle.bg} flex flex-col justify-between relative overflow-hidden backdrop-blur-md`}>
           <div>
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-mono font-bold tracking-widest text-emerald-300 uppercase bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
@@ -103,7 +107,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             </div>
 
             <div className="flex items-baseline space-x-3 my-4">
-              <span className={`text-6xl sm:text-7xl font-extrabold tracking-tight ${aqiStyle.text}`}>
+              <span className={`text-6xl sm:text-7xl font-extrabold tracking-tight ${aqiStyle.text}`} aria-label={`US Air Quality Index ${current.usAqi}, Category: ${current.usAqiCategory}`}>
                 {current.usAqi}
               </span>
               <span className="text-xs text-slate-400">US EPA Index points (0–500)</span>
@@ -147,14 +151,16 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             </div>
 
             <button
+              type="button"
               onClick={() => onAskAI(`What precautions should I take in ${data.location.name} with US AQI at ${current.usAqi}?`)}
-              className="text-xs font-medium text-emerald-300 hover:text-emerald-200 flex items-center ml-auto"
+              aria-label={`Ask AI what precautions to take in ${data.location.name}`}
+              className="text-xs font-medium text-emerald-300 hover:text-emerald-200 flex items-center ml-auto focus:outline-none focus-visible:underline"
             >
               <span>Ask AI what to do</span>
-              <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+              <ChevronRight className="w-3.5 h-3.5 ml-0.5" aria-hidden="true" />
             </button>
           </div>
-        </div>
+        </section>
 
         {/* Quick Health & Routine Advice Card */}
         <div className="p-6 rounded-3xl bg-[#101e16] border border-[#1e3828] flex flex-col justify-between">
@@ -263,30 +269,35 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
       </div>
 
       {/* Hourly Pollution Trend Chart */}
-      <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
+      <section aria-label="Hourly Air Pollution Forecast Chart and Data" className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
           <div>
             <h3 className="text-base font-bold text-slate-100 flex items-center space-x-2">
-              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <TrendingUp className="w-4 h-4 text-emerald-400" aria-hidden="true" />
               <span>Hourly Air Pollution Forecast (Next 24-36 Hours)</span>
             </h3>
             <p className="text-xs text-slate-400">
               Modelled diurnal fluctuations showing predicted particulate peaks during early morning hours.
             </p>
           </div>
-          <div className="flex items-center space-x-3 text-xs">
+          <div className="flex items-center space-x-3 text-xs" aria-label="Chart Legend">
             <span className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" aria-hidden="true" />
               <span className="text-slate-300">US AQI</span>
             </span>
             <span className="flex items-center space-x-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-teal-300" />
+              <span className="w-2.5 h-2.5 rounded-full bg-teal-300" aria-hidden="true" />
               <span className="text-slate-300">PM2.5 (µg/m³)</span>
             </span>
           </div>
         </div>
 
-        <div className="w-full h-64 sm:h-72">
+        {/* Screen-reader accessible data summary */}
+        <p className="sr-only">
+          Hourly forecast shows peak predicted US AQI of {Math.max(...chartData.map(d => d.aqi || 0))} and peak PM2.5 of {Math.max(...chartData.map(d => d.pm25 || 0))} micrograms per cubic meter over the next 24 to 36 hours.
+        </p>
+
+        <div className="w-full h-64 sm:h-72" aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
@@ -316,7 +327,7 @@ export const AirDashboard: React.FC<AirDashboardProps> = ({ data, onRefresh, onA
             </AreaChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </section>
 
       {/* 5-Day Forecast Grid */}
       <div className="p-6 rounded-3xl bg-[#0f1d16] border border-[#1e3828]">

@@ -27,16 +27,18 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-[#0c1611]/90 backdrop-blur-md border-b border-[#1c2e23]">
+    <nav aria-label="Main Navigation" className="sticky top-0 z-50 bg-[#0c1611]/90 backdrop-blur-md border-b border-[#1c2e23]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand */}
-          <div 
+          <button 
+            type="button"
             onClick={() => setActiveTab('landing')}
-            className="flex items-center space-x-3 cursor-pointer group flex-shrink-0"
+            aria-label="AIRWISE Home"
+            className="flex items-center space-x-3 cursor-pointer group flex-shrink-0 bg-transparent border-0 p-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:rounded-lg"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-950/40 border border-emerald-400/30">
-              <Wind className="w-5 h-5 text-[#07130c]" />
+              <Wind className="w-5 h-5 text-[#07130c]" aria-hidden="true" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
@@ -48,24 +50,26 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
               </div>
               <p className="text-[10px] text-slate-400 hidden sm:block tracking-tight">{t('nav.tagline')}</p>
             </div>
-          </div>
+          </button>
 
           {/* Desktop Nav Items */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div aria-label={t('nav.tagline')} className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
+                  type="button"
+                  aria-current={isActive ? 'page' : undefined}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
                     isActive
                       ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-sm'
                       : 'text-slate-300 hover:text-white hover:bg-[#14261c]'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} aria-hidden="true" />
                   <span>{item.label}</span>
                 </button>
               );
@@ -77,18 +81,25 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
             <LanguageSelector />
 
             <button
+              type="button"
               onClick={() => setSearchOpen(!searchOpen)}
-              className="flex items-center space-x-2 bg-[#122218] hover:bg-[#183022] px-3 py-1.5 rounded-full border border-[#1f3727] text-xs transition-colors cursor-pointer group"
+              aria-expanded={searchOpen}
+              aria-haspopup="dialog"
+              className="flex items-center space-x-2 bg-[#122218] hover:bg-[#183022] px-3 py-1.5 rounded-full border border-[#1f3727] text-xs transition-colors cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               title="Click to change city"
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true" />
               <span className="text-slate-400">{t('nav.location')}:</span>
               <span className="font-semibold text-emerald-300 group-hover:text-emerald-200">{selectedCity}</span>
               <span className="text-[10px] text-slate-500 ml-1 underline underline-offset-2">{t('nav.change')}</span>
             </button>
 
             {searchOpen && onSelectCity && (
-              <div className="absolute right-0 top-12 w-80 z-50 p-2 rounded-2xl bg-[#0c1811] border border-[#213e2d] shadow-2xl">
+              <div 
+                role="dialog"
+                aria-label="Location search dialog"
+                className="absolute right-0 top-12 w-80 z-50 p-2 rounded-2xl bg-[#0c1811] border border-[#213e2d] shadow-2xl"
+              >
                 <LocationSearch
                   onSelectLocation={(loc) => {
                     onSelectCity(loc);
@@ -104,10 +115,13 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
           <div className="flex md:hidden items-center space-x-2">
             <LanguageSelector compact={true} />
             <button
+              type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#14261c]"
+              aria-expanded={mobileOpen}
+              aria-label={mobileOpen ? 'Close mobile menu' : 'Open mobile menu'}
+              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#14261c] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileOpen ? <X className="w-6 h-6" aria-hidden="true" /> : <Menu className="w-6 h-6" aria-hidden="true" />}
             </button>
           </div>
         </div>
@@ -115,7 +129,11 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
 
       {/* Mobile Menu Dropdown */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#0e1b14] border-b border-[#1c2e23] px-4 pt-2 pb-4 space-y-2">
+        <div 
+          role="navigation"
+          aria-label="Mobile Navigation"
+          className="md:hidden bg-[#0e1b14] border-b border-[#1c2e23] px-4 pt-2 pb-4 space-y-2"
+        >
           {onSelectCity && (
             <div className="py-2 border-b border-[#1c2e23] mb-2">
               <span className="text-xs text-slate-400 block mb-1.5">{t('nav.location')}:</span>
@@ -134,6 +152,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, selecte
             return (
               <button
                 key={item.id}
+                type="button"
+                aria-current={isActive ? 'page' : undefined}
                 onClick={() => {
                   setActiveTab(item.id);
                   setMobileOpen(false);

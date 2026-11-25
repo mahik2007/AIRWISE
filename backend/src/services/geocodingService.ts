@@ -14,7 +14,17 @@ export async function searchCities(query: string, count: number = 5): Promise<Ge
       return [];
     }
 
-    return response.data.results.map((item: any) => ({
+    interface OpenMeteoGeoItem {
+      id: number;
+      name: string;
+      latitude: number;
+      longitude: number;
+      country?: string;
+      country_code?: string;
+      admin1?: string;
+    }
+
+    return response.data.results.map((item: OpenMeteoGeoItem) => ({
       id: item.id,
       name: item.name,
       latitude: item.latitude,
@@ -23,8 +33,9 @@ export async function searchCities(query: string, count: number = 5): Promise<Ge
       countryCode: item.country_code,
       admin1: item.admin1 || '',
     }));
-  } catch (error: any) {
-    console.error('Error fetching geocoding results:', error?.message || error);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Error fetching geocoding results:', errorMsg);
     throw new Error('Unable to retrieve location coordinates. Please try again.');
   }
 }

@@ -49,8 +49,9 @@ app.use((req, res) => {
 });
 
 // Global error handler (prevent stack trace leak)
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled server error:', err?.message || err);
+app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const message = err instanceof Error ? err.message : String(err);
+  console.error('Unhandled server error:', message);
   res.status(500).json({ error: 'An unexpected internal server error occurred.' });
 });
 

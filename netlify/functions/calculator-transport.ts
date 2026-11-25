@@ -62,7 +62,9 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
       headers: CORS_HEADERS,
       body: JSON.stringify(comparison),
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.error('Transport calculation error:', errorMsg);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,
