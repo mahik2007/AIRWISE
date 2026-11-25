@@ -40,7 +40,7 @@ jobs:
         run: cd frontend && npx tsc -b
 
       - name: Lint Frontend (Oxlint)
-        run: cd frontend && npx oxlint --deny-warnings=false
+        run: cd frontend && npx oxlint
 
       - name: Run Backend Tests
         run: npm run test:backend
