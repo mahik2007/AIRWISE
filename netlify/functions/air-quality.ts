@@ -36,8 +36,15 @@ async function fetchCPCBStationData(latitude: number, longitude: number, cityNam
     const response = await axios.get(endpoint, { timeout: 4000 });
     
     if (response.data && response.data.records && response.data.records.length > 0) {
+      interface CpcbRecord {
+        aqi?: string | number;
+        AQI?: string | number;
+        station?: string;
+        station_name?: string;
+        last_update?: string;
+      }
       // Find a record with an explicit, valid non-zero AQI number. Never use pollutant_avg as AQI.
-      const validRecord = response.data.records.find((r: any) => {
+      const validRecord = response.data.records.find((r: CpcbRecord) => {
         const rawAqi = r.aqi ?? r.AQI;
         const num = Number(rawAqi);
         return !isNaN(num) && num > 0;
@@ -54,8 +61,9 @@ async function fetchCPCBStationData(latitude: number, longitude: number, cityNam
         };
       }
     }
-  } catch (err: any) {
-    console.warn('CPCB data adapter query failed, falling back to atmospheric model:', err?.message || err);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.warn('CPCB data adapter query failed, falling back to atmospheric model:', errorMsg);
   }
 
   return {
@@ -226,8 +234,9 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
       headers: CORS_HEADERS,
       body: JSON.stringify(payload),
     };
-  } catch (error: any) {
-    console.error('Error fetching air quality in Netlify function:', error?.message || error);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Error fetching air quality in Netlify function:', errorMsg);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,

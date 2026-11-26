@@ -61,7 +61,17 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
       };
     }
 
-    const results: GeocodingResult[] = response.data.results.map((item: any) => ({
+    interface OpenMeteoGeoItem {
+      id: number;
+      name: string;
+      latitude: number;
+      longitude: number;
+      country?: string;
+      country_code?: string;
+      admin1?: string;
+    }
+
+    const results: GeocodingResult[] = response.data.results.map((item: OpenMeteoGeoItem) => ({
       id: item.id,
       name: item.name,
       latitude: item.latitude,
@@ -76,8 +86,9 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
       headers: CORS_HEADERS,
       body: JSON.stringify({ results }),
     };
-  } catch (error: any) {
-    console.error('Error in geocode function:', error?.message || error);
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    console.error('Error in geocode function:', err?.message || error);
     return {
       statusCode: 500,
       headers: CORS_HEADERS,

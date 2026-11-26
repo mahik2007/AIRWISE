@@ -103,7 +103,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       const fallbackMsg: ChatMessage = {
         id: `err-${Date.now()}`,
@@ -138,11 +138,12 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
 
         {/* Persona Switcher */}
         <div className="flex items-center space-x-2 bg-[#14261c] p-1.5 rounded-xl border border-[#213e2c]">
-          <span className="text-[11px] text-slate-400 pl-2">{t('assistant.roleLabel')}</span>
+          <label htmlFor="assistant-user-role" className="text-[11px] text-slate-400 pl-2">{t('assistant.roleLabel')}</label>
           <select
+            id="assistant-user-role"
             value={userRole}
-            onChange={(e) => setUserRole(e.target.value as any)}
-            className="bg-[#0b140f] text-xs text-emerald-300 font-medium py-1 px-2.5 rounded-lg border border-[#1c3525] focus:outline-none"
+            onChange={(e) => setUserRole(e.target.value as 'student' | 'working_professional' | 'homemaker' | 'caregiver' | 'general')}
+            className="bg-[#0b140f] text-xs text-emerald-300 font-medium py-1 px-2.5 rounded-lg border border-[#1c3525] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
             <option value="general">{t('assistant.roleGeneral')}</option>
             <option value="student">{t('assistant.roleStudent')}</option>
@@ -154,7 +155,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
       </div>
 
       {/* Chat Messages Log */}
-      <div className="space-y-4 min-h-[400px]">
+      <section aria-label="Conversation with AirWise Assistant" aria-live="polite" className="space-y-4 min-h-[400px]">
         {messages.map((msg) => (
           <div
             key={msg.id}
@@ -243,7 +244,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Suggested Quick Prompts */}
       <div className="space-y-1.5">
@@ -263,8 +264,12 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
       </div>
 
       {/* Input Form */}
-      <div className="relative">
+      <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="relative">
+        <label htmlFor="assistant-query-input" className="sr-only">
+          {t('assistant.inputPlaceholder', 'Ask about air quality precautions')}
+        </label>
         <textarea
+          id="assistant-query-input"
           rows={2}
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -278,14 +283,15 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({ airQualityData, defaul
           className="w-full p-3.5 pr-20 rounded-2xl bg-[#0f1d16] border border-[#1f3a29] text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/30 transition-all resize-none"
         />
         <button
-          onClick={() => handleSend()}
+          type="submit"
           disabled={loading || !input.trim()}
-          className="absolute right-3 bottom-3.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md"
+          aria-label={t('assistant.btnSend', 'Send message')}
+          className="absolute right-3 bottom-3.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-bold text-xs flex items-center space-x-1.5 transition-all shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
         >
           <span>{t('assistant.btnSend')}</span>
-          <Send className="w-3.5 h-3.5" />
+          <Send className="w-3.5 h-3.5" aria-hidden="true" />
         </button>
-      </div>
+      </form>
     </div>
   );
 };

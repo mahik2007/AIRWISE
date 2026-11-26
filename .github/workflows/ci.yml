@@ -1,0 +1,57 @@
+name: AirWise Quality & Production CI
+
+on:
+  push:
+    branches: [main, quality/*, feature/*]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    name: Test, Lint & Production Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install Root Dependencies
+        run: npm ci
+
+      - name: Install Backend Dependencies
+        run: cd backend && npm ci
+
+      - name: Install Frontend Dependencies
+        run: cd frontend && npm ci
+
+      - name: TypeScript Typecheck (Backend)
+        run: cd backend && npx tsc --noEmit
+
+      - name: TypeScript Typecheck (Frontend)
+        run: cd frontend && npx tsc -b
+
+      - name: Lint Frontend (Oxlint)
+        run: cd frontend && npx oxlint
+
+      - name: Run Backend Tests
+        run: npm run test:backend
+        env:
+          NODE_ENV: test
+
+      - name: Run Frontend Tests
+        run: npm run test:frontend
+        env:
+          NODE_ENV: test
+
+      - name: Verify Production Build
+        run: npm run build
+

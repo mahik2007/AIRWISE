@@ -8,6 +8,18 @@
   node_bundler = "esbuild"
   included_files = ["netlify/functions/**"]
 
+# Production Security Headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(self), camera=(), microphone=(), payment=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    # Content-Security-Policy in Report-Only mode first to prevent breaking any dynamic integrations
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.data.gov.in https://generativelanguage.googleapis.com; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+
 # API Redirects to Netlify Functions
 [[redirects]]
   from = "/api/chat"

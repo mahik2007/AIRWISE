@@ -22,6 +22,32 @@ interface HandlerResponse {
   body: string;
 }
 
+// In-memory sliding window rate limiter for Netlify function container lifetime
+interface RateLimitRecord {
+  count: number;
+  resetAt: number;
+}
+const rateLimitMap = new Map<string, RateLimitRecord>();
+const CHAT_RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const CHAT_RATE_LIMIT_MAX_REQUESTS = 30;
+
+function isRateLimited(ip: string): boolean {
+  if (process.env.NODE_ENV === 'test') {
+    return false;
+  }
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  if (!record || now > record.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + CHAT_RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  if (record.count >= CHAT_RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+  record.count += 1;
+  return false;
+}
+
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
@@ -85,11 +111,13 @@ CRITICAL OPERATIONAL RULES:
    }
    Output ONLY valid JSON. No markdown backticks, no markdown fencing, no leading or trailing conversational chatter.`;
 
-function generateRuleBasedFallback(body: any): ChatRecommendationResponse {
+type ChatInput = z.infer<typeof ChatInputSchema>;
+
+function generateRuleBasedFallback(body: ChatInput): ChatRecommendationResponse {
   const hasAqi = typeof body.airQuality?.usAqi === 'number' && !isNaN(body.airQuality.usAqi);
-  const aqi = hasAqi ? body.airQuality.usAqi : undefined;
+  const aqi = hasAqi ? body.airQuality?.usAqi : undefined;
   const location = body.location?.name || 'your area';
-  const query = (body.message || body.userMessage || '').toLowerCase();
+  const query = (body.message || '').toLowerCase();
 
   const aqiStr = aqi !== undefined ? `(US AQI: ${aqi})` : '(Live telemetry unavailable)';
   const isSevere = aqi !== undefined && aqi > 200;
@@ -180,7 +208,19 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
     };
   }
 
-  let parsedBody: any;
+  const clientIp = event.headers?.['x-nf-client-connection-ip']
+    || event.headers?.['client-ip']
+    || event.headers?.['x-forwarded-for']?.split(',')[0].trim()
+    || 'anonymous';
+  if (isRateLimited(clientIp)) {
+    return {
+      statusCode: 429,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Too many requests. Please wait a moment before sending another message.' }),
+    };
+  }
+
+  let parsedBody: ChatInput;
   try {
     const raw = JSON.parse(event.body);
     const validated = ChatInputSchema.safeParse(raw);
@@ -278,9 +318,10 @@ export async function handler(event: HandlerEvent): Promise<HandlerResponse> {
       headers: CORS_HEADERS,
       body: JSON.stringify(recommendationResult),
     };
-  } catch (error: any) {
-    const errorType = error?.name || 'Error';
-    const status = error?.status || error?.statusCode || 'UNKNOWN';
+  } catch (error: unknown) {
+    const err = error as { name?: string; status?: number | string; statusCode?: number | string };
+    const errorType = err?.name || 'Error';
+    const status = err?.status || err?.statusCode || 'UNKNOWN';
     console.warn(`[AI Assistant Fallback] Live inference unavailable (Category: ${errorType}, Code: ${status}). Seamlessly serving grounded deterministic advisory.`);
     const fallback = generateRuleBasedFallback(parsedBody);
     return {

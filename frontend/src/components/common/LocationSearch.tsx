@@ -46,7 +46,7 @@ export const LocationSearch: React.FC<LocationSearchProps> = ({
         const res = await searchLocations(query.trim());
         setResults(res);
         setIsOpen(true);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(err);
         setErrorMessage('Unable to reach location service. Please verify network.');
       } finally {
