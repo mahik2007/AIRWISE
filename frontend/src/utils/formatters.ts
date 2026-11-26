@@ -99,8 +99,113 @@ export function formatDate(isoString: string): string {
   try {
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return isoString;
-    return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   } catch {
     return isoString;
   }
+}
+
+/**
+ * Format geographic coordinates with directional hemisphere notation (N/S and E/W).
+ * Properly handles positive, negative, and zero coordinates.
+ */
+export function formatCoordinates(lat: number, lon: number): string {
+  if (typeof lat !== 'number' || typeof lon !== 'number' || isNaN(lat) || isNaN(lon)) {
+    return 'Coordinates Unavailable';
+  }
+  const latDir = lat >= 0 ? 'N' : 'S';
+  const lonDir = lon >= 0 ? 'E' : 'W';
+  return `${Math.abs(lat).toFixed(4)}°${latDir}, ${Math.abs(lon).toFixed(4)}°${lonDir}`;
+}
+
+export interface WhoGuidelineSpec {
+  value: number; // numeric value in standard target units
+  unit: string;
+  averagingPeriod: string; // e.g. '24-hour', '8-hour peak'
+  label: string; // e.g. '15 µg/m³ (24-h)'
+}
+
+export interface WhoComparisonResult {
+  whoSpec: WhoGuidelineSpec;
+  isCompatible: boolean;
+  exceedsGuideline: boolean | null;
+  ratio: number | null;
+  ratioDisplay: string;
+  statusBadge: 'within' | 'exceeds' | 'reference_only';
+  reasonWhyUnavailable?: string;
+}
+
+/**
+ * Evaluates a measured pollutant concentration against WHO 2021 Air Quality Guidelines.
+ *
+ * Requirements:
+ * - PM2.5: 15 µg/m³, 24-hour
+ * - PM10: 45 µg/m³, 24-hour
+ * - NO2: 25 µg/m³, 24-hour
+ * - O3: 100 µg/m³, 8-hour daily maximum
+ * - SO2: 40 µg/m³, 24-hour
+ * - CO: 4 mg/m³ (or 4000 µg/m³), 24-hour
+ *
+ * Strict Rule: Do not calculate or display an exceedance ratio when the source
+ * measurement averaging period does not match the WHO reference period.
+ * In that case, display WHO value as reference context with an explicit explanation.
+ */
+export function evaluateWhoGuideline(
+  pollutant: 'pm2_5' | 'pm10' | 'nitrogenDioxide' | 'ozone' | 'sulphurDioxide' | 'carbonMonoxide',
+  measuredValue: number,
+  measuredUnit: string,
+  measuredAveragingPeriod: string // e.g. '1-hour instantaneous/model', '24-hour'
+): WhoComparisonResult {
+  const specs: Record<string, WhoGuidelineSpec> = {
+    pm2_5: { value: 15, unit: 'µg/m³', averagingPeriod: '24-hour', label: '15 µg/m³ (24-h)' },
+    pm10: { value: 45, unit: 'µg/m³', averagingPeriod: '24-hour', label: '45 µg/m³ (24-h)' },
+    nitrogenDioxide: { value: 25, unit: 'µg/m³', averagingPeriod: '24-hour', label: '25 µg/m³ (24-h)' },
+    ozone: { value: 100, unit: 'µg/m³', averagingPeriod: '8-hour daily maximum', label: '100 µg/m³ (8-h max)' },
+    sulphurDioxide: { value: 40, unit: 'µg/m³', averagingPeriod: '24-hour', label: '40 µg/m³ (24-h)' },
+    carbonMonoxide: { value: 4, unit: 'mg/m³', averagingPeriod: '24-hour', label: '4 mg/m³ (24-h)' },
+  };
+
+  const spec = specs[pollutant];
+  if (!spec) {
+    throw new Error(`Unknown pollutant: ${pollutant}`);
+  }
+
+  // Normalize units for CO if measurement is µg/m³ and guideline is mg/m³
+  let normalizedMeasured = measuredValue;
+  if (pollutant === 'carbonMonoxide') {
+    if (measuredUnit === 'µg/m³') {
+      normalizedMeasured = measuredValue / 1000; // convert µg/m³ to mg/m³ for direct unit consistency
+    }
+  }
+
+  // Averaging period compatibility check:
+  // WHO guidelines are 24-hour averages (or 8-hour daily max for O3).
+  // Real-time telemetry/model outputs are typically 1-hour hourly values.
+  const is24hMatch = spec.averagingPeriod.includes('24-hour') && measuredAveragingPeriod.toLowerCase().includes('24-h');
+  const is8hMatch = spec.averagingPeriod.includes('8-hour') && measuredAveragingPeriod.toLowerCase().includes('8-h');
+  const isCompatible = is24hMatch || is8hMatch;
+
+  if (!isCompatible) {
+    return {
+      whoSpec: spec,
+      isCompatible: false,
+      exceedsGuideline: null,
+      ratio: null,
+      ratioDisplay: 'Reference Context Only',
+      statusBadge: 'reference_only',
+      reasonWhyUnavailable: `Current reading is a ${measuredAveragingPeriod}. Direct ratio unavailable because WHO 2021 guideline specifies a ${spec.averagingPeriod} average.`,
+    };
+  }
+
+  const ratio = Number((normalizedMeasured / spec.value).toFixed(1));
+  const exceeds = normalizedMeasured > spec.value;
+
+  return {
+    whoSpec: spec,
+    isCompatible: true,
+    exceedsGuideline: exceeds,
+    ratio,
+    ratioDisplay: `${ratio}x WHO ref`,
+    statusBadge: exceeds ? 'exceeds' : 'within',
+  };
 }
